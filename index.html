@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英雄联盟 16型人格测试 (LoL-MBTI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .neon-border { box-shadow: 0 0 10px #0ea5e9, inset 0 0 10px #0ea5e9; border: 1px solid #0ea5e9; }
+        .neon-text { text-shadow: 0 0 5px #38bdf8; }
+        .option-btn:hover { background-color: #1e293b; border-color: #38bdf8; box-shadow: 0 0 8px #38bdf8; transform: scale(1.02); transition: all 0.2s; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="max-w-2xl w-full bg-slate-800 rounded-xl p-8 neon-border relative overflow-hidden">
+        
+        <div id="screen-start" class="text-center">
+            <h1 class="text-4xl font-black mb-4 neon-text tracking-wider">LoL - MBTI</h1>
+            <p class="text-slate-400 mb-8">用最硬核的数据，测出你在峡谷中的真实灵魂与本命英雄。</p>
+            <button onclick="startQuiz()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors">
+                ⚡ 寻找本命英雄
+            </button>
+        </div>
+
+        <div id="screen-quiz" class="hidden">
+            <div class="w-full bg-slate-700 rounded-full h-2 mb-6">
+                <div id="progress-bar" class="bg-sky-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            
+            <p id="question-counter" class="text-sky-400 text-sm font-bold mb-2">题目 1 / 20</p>
+            <h2 id="question-text" class="text-xl font-semibold mb-6 leading-relaxed">题目加载中...</h2>
+            
+            <div id="options-container" class="space-y-4">
+                </div>
+        </div>
+
+        <div id="screen-result" class="hidden text-center">
+            <h2 class="text-2xl font-bold text-slate-300 mb-2">基因测序完成，你的本命英雄是：</h2>
+            <h1 id="result-champ" class="text-5xl font-black text-amber-400 my-6 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">加载中...</h1>
+            
+            <div class="bg-slate-700 rounded-lg p-4 mb-6 text-left text-sm text-slate-300">
+                <p class="mb-2">📊 <span class="font-bold text-white">你的灵魂雷达：</span></p>
+                <p id="result-stats" class="font-mono text-sky-300"></p>
+            </div>
+            
+            <button onclick="location.reload()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded transition-colors">
+                ↻ 重新测试
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 1. 内置小型英雄数据库 (向量顺序: 团队, 激进, 微操, 风险)
+        // 你可以将之前生成的 CSV 数据按这个格式继续添加
+        const CHAMPIONS = [
+            { name: "暗裔剑魔", vector: [4, 8, 4, 5.5] },
+            { name: "九尾妖狐", vector: [4, 3, 5, 5.5] },
+            { name: "离群之刺", vector: [3, 5, 7, 6.5] },
+            { name: "影哨", vector: [0, 0, 0, 0.0] },
+            { name: "牛头酋长", vector: [9, 6, 7, 5.5] },
+            { name: "铁血狼母", vector: [2, 9, 10, 4.5] },
+            { name: "殇之木乃伊", vector: [6, 2, 3, 5.0] },
+            { name: "冰晶凤凰", vector: [4, 1, 10, 5.5] },
+            { name: "黑暗之女", vector: [3, 2, 6, 6.0] },
+            { name: "残月之肃", vector: [2, 6, 10, 3.5] },
+            { name: "寒冰射手", vector: [3, 7, 4, 4.5] },
+            { name: "铸星龙王", vector: [3, 2, 7, 5.0] },
+            { name: "双界灵兔", vector: [4, 3, 5, 5.5] },
+            { name: "沙漠皇帝", vector: [3, 6, 9, 7.0] },
+            { name: "星界游神", vector: [4, 4, 9, 4.5] },
+            { name: "虚空女皇", vector: [2, 4, 10, 5.5] },
+            { name: "蒸汽机器人", vector: [8, 4, 4, 4.5] },
+            { name: "复仇焰魂", vector: [2, 2, 4, 5.5] },
+            { name: "弗雷尔卓德之心", vector: [9, 3, 3, 3.5] },
+            { name: "狂厄蔷薇", vector: [5, 9, 3, 6.0] },
+            { name: "皮城女警", vector: [2, 8, 6, 5.0] },
+            { name: "青钢影", vector: [6, 8, 4, 5.5] },
+            { name: "魔蛇之拥", vector: [3, 2, 10, 5.5] },
+            { name: "虚空恐惧", vector: [7, 3, 5, 5.0] },
+            { name: "英勇投弹手", vector: [3, 8, 6, 7.0] },
+            { name: "诺克萨斯之手", vector: [5, 9, 2, 5.0] },
+            { name: "皎月女神", vector: [6, 7, 4, 7.5] },
+            { name: "祖安狂人", vector: [7, 5, 5, 5.5] },
+            { name: "荣耀行刑官", vector: [3, 9, 8, 5.0] },
+            { name: "时间刺客", vector: [3, 5, 8, 6.0] },
+            { name: "蜘蛛女皇", vector: [5, 6, 9, 6.5] },
+            { name: "痛苦之拥", vector: [2, 4, 10, 5.5] },
+            { name: "探险家", vector: [2, 7, 7, 6.5] },
+            { name: "远古恐惧", vector: [3, 2, 9, 5.5] },
+            { name: "无双剑姬", vector: [4, 10, 3, 6.0] },
+            { name: "潮汐海灵", vector: [4, 6, 6, 6.5] },
+            { name: "正义巨像", vector: [10, 1, 5, 3.5] },
+            { name: "海洋之灾", vector: [6, 7, 9, 5.5] },
+            { name: "德玛西亚之力", vector: [7, 7, 5, 4.0] },
+            { name: "迷失之牙", vector: [5, 6, 8, 5.5] },
+            { name: "酒桶", vector: [7, 4, 5, 5.0] },
+            { name: "法外狂徒", vector: [5, 8, 3, 5.5] },
+            { name: "灵罗娃娃", vector: [4, 7, 5, 6.0] },
+            { name: "战争之影", vector: [6, 8, 6, 6.0] },
+            { name: "大发明家", vector: [6, 2, 8, 5.0] },
+            { name: "异画师", vector: [1, 7, 9, 7.5] },
+            { name: "海兽祭司", vector: [6, 8, 4, 5.5] },
+            { name: "刀锋舞者", vector: [4, 7, 5, 6.0] },
+            { name: "翠神", vector: [5, 3, 7, 5.0] },
+            { name: "风暴之怒", vector: [5, 3, 7, 5.0] },
+            { name: "德玛西亚皇子", vector: [8, 6, 5, 4.5] },
+            { name: "武器大师", vector: [5, 7, 5, 7.0] },
+            { name: "未来守护者", vector: [4, 8, 7, 5.5] },
+            { name: "戏命师", vector: [2, 10, 6, 8.0] },
+            { name: "暴走萝莉", vector: [2, 9, 6, 6.5] },
+            { name: "纳祖芒荣耀", vector: [8, 8, 9, 7.5] },
+            { name: "虚空之女", vector: [5, 8, 6, 5.5] },
+            { name: "复仇之矛", vector: [2, 8, 7, 6.0] },
+            { name: "天启者", vector: [7, 1, 5, 4.5] },
+            { name: "死亡颂唱者", vector: [2, 2, 7, 6.0] },
+            { name: "虚空行者", vector: [5, 3, 8, 5.5] },
+            { name: "不祥之刃", vector: [3, 4, 8, 6.5] },
+            { name: "正义天使", vector: [6, 6, 7, 6.5] },
+            { name: "影流之镰", vector: [6, 10, 8, 5.5] },
+            { name: "狂暴之心", vector: [4, 6, 4, 6.5] },
+            { name: "虚空掠夺者", vector: [4, 9, 6, 6.0] },
+            { name: "永猎双子", vector: [2, 8, 4, 5.0] },
+            { name: "暴怒骑士", vector: [2, 8, 7, 5.0] },
+            { name: "深渊巨口", vector: [2, 8, 6, 6.5] },
+            { name: "诡术妖姬", vector: [4, 1, 9, 5.5] },
+            { name: "盲僧", vector: [5, 8, 6, 5.5] },
+            { name: "曙光女神", vector: [8, 4, 4, 3.5] },
+            { name: "含羞蓓蕾", vector: [2, 0, 8, 5.0] },
+            { name: "冰霜女巫", vector: [5, 2, 6, 5.0] },
+            { name: "圣枪游侠", vector: [5, 8, 6, 5.5] },
+            { name: "仙灵女巫", vector: [5, 4, 5, 5.5] },
+            { name: "光辉女郎", vector: [4, 2, 5, 5.5] },
+            { name: "熔岩巨兽", vector: [9, 5, 2, 6.0] },
+            { name: "虚空先知", vector: [2, 2, 6, 5.5] },
+            { name: "扭曲树精", vector: [8, 3, 3, 4.5] },
+            { name: "无极剑圣", vector: [4, 10, 4, 6.0] },
+            { name: "流光镜影", vector: [4, 2, 5, 5.5] },
+            { name: "明烛", vector: [4, 2, 5, 5.0] },
+            { name: "赏金猎人", vector: [2, 8, 1, 6.5] },
+            { name: "齐天大圣", vector: [5, 8, 3, 5.0] },
+            { name: "铁铠冥魂", vector: [6, 4, 4, 5.5] },
+            { name: "堕落天使", vector: [6, 1, 1, 4.5] },
+            { name: "百裂冥犬", vector: [5, 9, 2, 4.5] },
+            { name: "唤潮鲛姬", vector: [3, 4, 5, 5.5] },
+            { name: "沙漠死神", vector: [5, 7, 6, 6.5] },
+            { name: "深海泰坦", vector: [6, 4, 6, 5.0] },
+            { name: "万花通灵", vector: [1, 1, 5, 5.0] },
+            { name: "狂野女猎手", vector: [4, 5, 8, 6.0] },
+            { name: "不羁之悦", vector: [4, 8, 10, 6.0] },
+            { name: "永恒梦魇", vector: [5, 9, 4, 5.5] },
+            { name: "雪原双子", vector: [6, 4, 4, 5.5] },
+            { name: "狂战士", vector: [5, 9, 3, 6.0] },
+            { name: "发条魔灵", vector: [3, 4, 7, 6.5] },
+            { name: "山隐之焰", vector: [9, 5, 5, 4.0] },
+            { name: "不屈之枪", vector: [4, 9, 4, 6.0] },
+            { name: "圣锤之毅", vector: [7, 6, 6, 4.0] },
+            { name: "血港鬼影", vector: [3, 9, 7, 5.0] },
+            { name: "元素女皇", vector: [2, 0, 8, 2.0] },
+            { name: "德玛西亚之翼", vector: [4, 9, 5, 5.5] },
+            { name: "幻翎", vector: [4, 2, 5, 5.0] },
+            { name: "披甲龙龟", vector: [10, 4, 5, 4.5] },
+            { name: "虚空遁地兽", vector: [5, 8, 3, 5.0] },
+            { name: "镕铁少女", vector: [0, 0, 0, 0.0] },
+            { name: "炼金男爵", vector: [6, 2, 8, 5.5] },
+            { name: "荒漠屠夫", vector: [5, 8, 3, 5.0] },
+            { name: "傲之追猎者", vector: [4, 7, 8, 4.5] },
+            { name: "放逐之刃", vector: [5, 8, 8, 4.5] },
+            { name: "机械公敌", vector: [6, 3, 10, 5.5] },
+            { name: "符文法师", vector: [2, 2, 7, 6.0] },
+            { name: "沙漠玫瑰", vector: [5, 8, 6, 5.5] },
+            { name: "北地之怒", vector: [7, 5, 4, 5.5] },
+            { name: "涤魂圣枪", vector: [2, 7, 7, 6.5] },
+            { name: "星籁歌姬", vector: [0, 0, 0, 0.0] },
+            { name: "腕豪", vector: [5, 8, 2, 4.5] },
+            { name: "恶魔小丑", vector: [4, 8, 9, 7.0] },
+            { name: "暮光之眼", vector: [9, 3, 4, 3.0] },
+            { name: "龙血武姬", vector: [6, 8, 4, 5.5] },
+            { name: "炼金术士", vector: [8, 4, 5, 5.5] },
+            { name: "亡灵战神", vector: [9, 5, 5, 4.0] },
+            { name: "战争女神", vector: [3, 9, 4, 5.0] },
+            { name: "上古领主", vector: [8, 7, 5, 6.0] },
+            { name: "炽炎雏龙", vector: [2, 8, 6, 6.5] },
+            { name: "琴瑟仙女", vector: [2, 5, 4, 6.5] },
+            { name: "众星之子", vector: [5, 2, 3, 4.5] },
+            { name: "诺克萨斯统领", vector: [6, 2, 8, 5.5] },
+            { name: "解脱者", vector: [4, 3, 5, 5.5] },
+            { name: "暗黑元首", vector: [3, 2, 8, 5.5] },
+            { name: "河流之王", vector: [9, 3, 5, 4.5] },
+            { name: "岩雀", vector: [7, 1, 5, 4.5] },
+            { name: "刀锋之影", vector: [3, 9, 7, 5.0] },
+            { name: "瓦洛兰之盾", vector: [8, 4, 3, 4.5] },
+            { name: "迅捷斥候", vector: [3, 5, 6, 6.0] },
+            { name: "魂锁典狱长", vector: [6, 5, 7, 5.5] },
+            { name: "麦林炮手", vector: [3, 9, 4, 7.0] },
+            { name: "巨魔之王", vector: [6, 7, 5, 4.5] },
+            { name: "蛮族之王", vector: [5, 10, 5, 6.0] },
+            { name: "卡牌大师", vector: [2, 6, 9, 6.0] },
+            { name: "瘟疫之源", vector: [2, 9, 6, 6.0] },
+            { name: "兽灵行者", vector: [7, 8, 7, 6.0] },
+            { name: "无畏战车", vector: [5, 8, 8, 5.5] },
+            { name: "惩戒之箭", vector: [3, 7, 2, 5.5] },
+            { name: "暗夜猎手", vector: [1, 10, 8, 5.5] },
+            { name: "邪恶小法师", vector: [2, 2, 7, 6.0] },
+            { name: "虚空之眼", vector: [2, 2, 8, 6.0] },
+            { name: "愁云使者", vector: [0, 0, 0, 0.0] },
+            { name: "皮城执法官", vector: [5, 8, 4, 5.5] },
+            { name: "破败之王", vector: [4, 6, 5, 4.0] },
+            { name: "奥术先驱", vector: [4, 2, 9, 6.0] },
+            { name: "猩红收割者", vector: [6, 2, 7, 5.0] },
+            { name: "不灭狂雷", vector: [7, 7, 3, 5.5] },
+            { name: "祖安怒兽", vector: [5, 9, 3, 6.0] },
+            { name: "逆羽", vector: [6, 10, 5, 5.5] },
+            { name: "远古巫灵", vector: [3, 1, 8, 5.5] },
+            { name: "德邦总管", vector: [6, 8, 2, 5.5] },
+            { name: "疾风剑豪", vector: [4, 8, 10, 6.0] },
+            { name: "封魔剑魂", vector: [4, 8, 8, 6.0] },
+            { name: "牧魂人", vector: [6, 6, 6, 5.0] },
+            { name: "不破之誓", vector: [2, 9, 4, 4.5] },
+            { name: "魔法猫咪", vector: [1, 5, 2, 6.5] },
+            { name: "不落魔锋", vector: [6, 8, 2, 4.5] },
+            { name: "生化魔人", vector: [7, 3, 8, 5.0] },
+            { name: "影流之主", vector: [2, 9, 7, 5.0] },
+            { name: "祖安花火", vector: [5, 8, 6, 5.5] },
+            { name: "爆破鬼才", vector: [4, 2, 4, 5.5] },
+            { name: "时光守护者", vector: [5, 2, 6, 5.0] },
+            { name: "暮光星灵", vector: [7, 1, 5, 4.5] },
+            { name: "荆棘之兴", vector: [3, 4, 7, 6.0] },
+        ];
+
+        // 2. 高压题库 (你可以在这里把 20 题全部填进去)
+        const QUESTIONS = [
+    // 🛡️ 第一阶段：BP 博弈与战备
+    {
+        q: "Q1：排位大厅，你在红色方一楼先手盲选，你的选人哲学是？",
+        options: [
+            { text: "秒锁我胜率最高、操作最自信的绝活，哪怕被 Counter 也能靠手法打穿。", weight: [-2, +2, +3, +2] },
+            { text: "选一个能清线、能抗压的万金油，保证自己这路绝对不穿线。", weight: [+2, -2, -1, -2] },
+            { text: "问队友要玩什么，选一个完美契合团队体系（如大招流）的摇摆位。", weight: [+3, -1, -1, -1] },
+            { text: "选一个中期单带无敌或者能疯狂游走的英雄，这把输赢我自己说了算。", weight: [-2, +1, +1, +2] }
+        ]
+    },
+    {
+        q: "Q2：如果队伍已经选了三个纯肉或工具人，极其缺乏输出，此时轮到你选辅助，你会？",
+        options: [
+            { text: "掏出兰博、萨勒芬妮，直接把辅助当成队伍的第二法核来打。", weight: [-2, +2, +1, +2] },
+            { text: "依然选常规功能型辅助，通过完美的视野布控和抓单弥补伤害不足。", weight: [+2, -1, -1, -1] },
+            { text: "选个硬控前排，死死保住队里唯一有输出的那个人，用命给他挡技能。", weight: [+3, -2, -1, -2] },
+            { text: "掏出派克等刺客辅助，放弃保护，全图游走强行斩杀撕裂对面防线。", weight: [-2, +3, +2, +3] }
+        ]
+    },
+    {
+        q: "Q3：加载界面，你发现对线的是一个前期的“线霸”英雄，你的搭配通常是？",
+        options: [
+            { text: "带引燃和绝对的进攻符文，越是线霸我越要跟他硬碰硬。", weight: [-1, +3, +2, +2] },
+            { text: "带传送和赖线回复符文，你压你的，我稳稳补我的塔下刀。", weight: [+1, -2, -1, -2] },
+            { text: "带传送和团队增益符文，随时准备放弃对线去支援野区和边路。", weight: [+3, -1, -1, -1] },
+            { text: "带贪婪的发育符文（如先攻/寻宝），只要我前期不死，后期我接管比赛。", weight: [-1, -1, +1, +3] }
+        ]
+    },
+    {
+        q: "Q4：开局 1 分钟，全军出击。你通常在做什么？",
+        options: [
+            { text: "直接奔向线上草丛，试图打对面一个措手不及，哪怕换血也不亏。", weight: [-1, +3, +1, +2] },
+            { text: "跑到敌方野区入口插一个极其深入的防守眼，算准时间回线。", weight: [+2, -1, -1, -1] },
+            { text: "和打野站在一起，甚至主动帮打野扛两下野怪，确保他无伤开局。", weight: [+3, -2, -1, -2] },
+            { text: "站在塔下切屏看队友战绩或网页，兵线交接了再慢慢走过去。", weight: [-2, -2, -1, -1] }
+        ]
+    },
+
+    // ⚔️ 第二阶段：对线期的窒息博弈
+    {
+        q: "Q5：刚升 3 级，突然发现敌方打野在地图另一侧露头。此时你和敌方都半血：",
+        options: [
+            { text: "绝佳机会！立刻交闪现上去硬拼，必须单杀他建立优势。", weight: [-1, +3, +2, +2] },
+            { text: "慢慢把兵线推过去，卡住他的身位不让他吃经验，折磨他。", weight: [+1, -1, +2, -1] },
+            { text: "赶紧把线推完，然后去敌方野区做眼或者游走帮中路/野区。", weight: [+2, -1, -1, +1] },
+            { text: "假装没看见，继续控线，试图把对面勾引出来让自家打野抓。", weight: [+1, -1, +1, -1] }
+        ]
+    },
+    {
+        q: "Q6：你把兵线推进了敌方塔下，但你发现敌方打野已经消失了，此时你：",
+        options: [
+            { text: "算准伤害，如果他敢补这几个塔下刀，我连人带塔一起越了！", weight: [-1, +3, +3, +3] },
+            { text: "立刻后撤消失在视野里，给其他路打信号，去吃果子回状态。", weight: [+1, -2, -1, -2] },
+            { text: "放弃吃塔皮，直接跑去中路或者野区掩护队友反蹲。", weight: [+3, -1, -1, -1] },
+            { text: "继续疯狂点塔皮，只要我操作够好，对面打野来了我直接一打二。", weight: [-2, +2, +1, +2] }
+        ]
+    },
+    {
+        q: "Q7：你的上单选了个重装战士且被针对，0-3 崩盘，你会怎么想？",
+        options: [
+            { text: "废物队友，屏蔽他，我必须在中下路杀穿才能赢。", weight: [-3, +2, +1, +1] },
+            { text: "指挥他去单带牵扯，只要把兵线运营好，这把还能拖。", weight: [+1, -1, -1, +1] },
+            { text: "放弃自己的发育节奏，频繁去上路帮他反蹲解围。", weight: [+3, -1, -1, -1] },
+            { text: "只要他团战能冲进人堆把关键控制打出来，死再多我也能收割。", weight: [-1, +1, +2, +2] }
+        ]
+    },
+    {
+        q: "Q8：你们在下路 2v2 拼到残血，此时对面辅助走位失误，但你家 AD 还没跟上：",
+        options: [
+            { text: "果断交闪现自己先上，只要技能命中率够高，我自己双杀。", weight: [-2, +3, +3, +3] },
+            { text: "强忍杀心，发信号让 AD 撤退，稳稳把兵线吃完赶紧回城。", weight: [+1, -2, -1, -2] },
+            { text: "肉身逼迫对面走位，只要能把人头喂给 AD，我死了都行。", weight: [+3, +1, -1, +1] },
+            { text: "躲在草丛里死死捏住技能，等对面按回城最后一秒再出手。", weight: [-1, +1, +1, +1] }
+        ]
+    },
+    {
+        q: "Q9：对线期结束，你手里正好有 3000 块钱回家，你会优先买什么？",
+        options: [
+            { text: "追求极致伤害，甚至不惜买一本“杀人书”或最暴力的纯输出大件。", weight: [-2, +3, +1, +3] },
+            { text: "按部就班买核心装备，顺便留 75 块钱买个真眼，绝不多贪。", weight: [+2, -1, -1, -1] },
+            { text: "买偏防守或团队功能性的装备（如鸟盾、重伤），增加容错率。", weight: [+3, -2, -1, -2] },
+            { text: "先买双草鞋加几个散件，主打一个移速拉满，哪里有架去哪里。", weight: [+1, +2, +1, +1] }
+        ]
+    },
+
+    // 🗺️ 第三阶段：中期的战略抉择
+    {
+        q: "Q10：你正在边线带炮车线进塔；但同时，野区马上要爆发 4v4 遭遇战。",
+        options: [
+            { text: "判断自己过去能不能收割，能拿人头就去，不能就继续带线。", weight: [-1, +1, +2, +1] },
+            { text: "兵线太香了！我发信号让他们拉扯，我吃完线直接推二塔。", weight: [-2, -1, -1, -1] },
+            { text: "立刻放弃兵线，交 TP 第一时间赶到战场给队友套护盾/抗伤。", weight: [+3, -1, -1, -1] },
+            { text: "躲在边线草丛里观察，等他们打得两败俱伤，我再传送去清屏。", weight: [-1, +1, +1, +1] }
+        ]
+    },
+    {
+        q: "Q11：关于“插眼和视野”，你最真实的内心潜台词是？",
+        options: [
+            { text: "视野是给弱者看的，只要我操作够硬，谁来抓我谁死。", weight: [-3, +2, +3, +3] },
+            { text: "视野是用来推算敌方核心位置的，看不到人我绝不过河道半步。", weight: [+2, -2, -1, -2] },
+            { text: "只要小龙要刷新，我冒着生命危险也要把河道点亮。", weight: [+3, -1, -1, -1] },
+            { text: "我只在我想单杀对面的那片草丛插眼，其他的随缘。", weight: [-1, +2, +1, +1] }
+        ]
+    },
+    {
+        q: "Q12：对面有一个 10-0 杀疯了的刺客，正面打不过，你会采取什么战术？",
+        options: [
+            { text: "寻找一切在野区阴他的机会，只要操作拉满，他也是一秒没。", weight: [-2, +3, +3, +3] },
+            { text: "魔鬼般清理三路兵线，兵线不过河道，他杀 100 个人也推不了塔。", weight: [+1, -2, -1, -2] },
+            { text: "全体五人死死抱团，谁也不落单，所有控制技能留给他一个人。", weight: [+3, -2, -1, -2] },
+            { text: "趁他们抱团抓单，我一个人去偷大龙或者带穿上路高地。", weight: [-2, +1, -1, +2] }
+        ]
+    },
+    {
+        q: "Q13：你们刚打赢 3v3，敌方中一塔只剩一丝血，但小龙刚好刷新：",
+        options: [
+            { text: "直接不管塔，冲进对面野区继续追杀残血，扩大个人经济。", weight: [-2, +3, +1, +2] },
+            { text: "稳健推掉一塔，然后全体安全回城更新装备，龙放了也无所谓。", weight: [+1, -2, -1, -1] },
+            { text: "赶紧把线推过去，全员转头去把小龙稳稳控下，服务团队。", weight: [+3, -1, -1, -1] },
+            { text: "让队友去打龙，我自己留下来单独吃掉这层塔皮和兵线。", weight: [-3, +1, +1, +1] }
+        ]
+    },
+    {
+        q: "Q14：如果游戏拖到了 40 分钟，你的心态通常会变成什么样？",
+        options: [
+            { text: "极度兴奋，这正是我展示极限微操和一秒六键的终极舞台。", weight: [-1, +2, +3, +2] },
+            { text: "高度紧绷，疯狂切屏看倒计时，随时准备抓对面的宏观漏洞。", weight: [+2, -1, +1, -1] },
+            { text: "极其谨慎，绝不走在第一个，脑子里全是如何保我方大腿。", weight: [+3, -2, -1, -2] },
+            { text: "有点焦躁，随时准备找机会闪现开团或者去偷家，受不了拖沓。", weight: [-1, +2, +1, +3] }
+        ]
+    },
+
+    // 💥 第四阶段：生死绝境
+    {
+        q: "Q15：远古龙坑附近焦灼拉扯。你的视线焦点主要放在：",
+        options: [
+            { text: "敌方 C 位失误！只要他敢往前一步，我立刻闪现一套秒他。", weight: [-1, +3, +3, +3] },
+            { text: "小地图！远古龙可以拉扯，但我刚才带的超级兵已经上高地了。", weight: [+2, -2, -1, -1] },
+            { text: "队友的位置！谁敢靠近我方核心，我就算交全技能也把他顶走。", weight: [+3, -1, -1, -2] },
+            { text: "敌方打野的惩戒血线！我随时准备下龙坑拼惩戒赌命。", weight: [-1, +1, +2, +3] }
+        ]
+    },
+    {
+        q: "Q16：对面带着大龙 Buff 抱团推你们的高地，怎么守？",
+        options: [
+            { text: "在高地边缘拉扯走位，试图用极限操作先秒掉走位不慎的脆皮。", weight: [-1, +2, +3, +2] },
+            { text: "用手长的 AOE 技能一波波清兵，绝不被开，拖过大龙 Buff。", weight: [+1, -2, -1, -2] },
+            { text: "直接肉身开团卖自己，只要能断掉对面的 Buff，死得就值。", weight: [+3, +2, -1, +1] },
+            { text: "守个屁！我刚才 TP 绕后眼了，我直接去拆他们老家换家！", weight: [-2, +1, -1, +3] }
+        ]
+    },
+    {
+        q: "Q17：对方 5 个人在打大龙（剩2000血），你独自一人在坑上方：",
+        options: [
+            { text: "算准伤害，闪现下龙坑跟打野拼惩戒/爆发，抢到就是神！", weight: [-1, +2, +3, +3] },
+            { text: "扔个技能试图抢一下，抢不到绝对不下坑，保留火种防高地。", weight: [+1, -1, +1, -1] },
+            { text: "放弃抢龙，立刻去断对面的兵线，或者换一座高地塔止损。", weight: [+2, -1, -1, -2] },
+            { text: "在上面跳舞亮表情搞心态，等他们残血再试图收割一两个。", weight: [-2, +1, +2, +2] }
+        ]
+    },
+    {
+        q: "Q18：对面正在点水晶，你是全队唯一活着的人：",
+        options: [
+            { text: "闪现冲进人堆，只要我能一瞬间把点水晶的 AD 杀了就行！", weight: [-1, +3, +3, +3] },
+            { text: "精准走位清兵，只要没小兵减伤机制，他们就点不掉水晶。", weight: [+2, -2, +2, -1] },
+            { text: "开着加速上前，用身体和走位挡住对面的平 A 弹道护水晶。", weight: [+3, -1, -1, +1] },
+            { text: "放弃抵抗，双手离开键盘，准备下一把。", weight: [-2, -2, -2, -2] }
+        ]
+    },
+
+    // 🎭 第五阶段：灵魂结算
+    {
+        q: "Q19：当游戏赢下时，哪种赛后数据面板会让你觉得“爽到了”？",
+        options: [
+            { text: "极高的 KDA（比如 15-2-8），我杀了全场最多的人，操作拉满。", weight: [-2, +3, +3, +2] },
+            { text: "极其夸张的发育和输出转化率，把对位玩弄于股掌之间。", weight: [+2, -1, +1, -1] },
+            { text: "突破天际的承伤数据和参团率，这把没我抗伤害早输了。", weight: [+3, -2, -1, -2] },
+            { text: "推塔数全场最高，甚至对英雄没多少伤害，但我硬拆了对面的家。", weight: [-2, +1, -1, +2] }
+        ]
+    },
+    {
+        q: "Q20：你最讨厌遇到什么样的队友？",
+        options: [
+            { text: "选个软辅躲在后面，一点操作不敢打，毫无进攻欲望的人。", weight: [+1, +2, +1, +1] },
+            { text: "兵线稀烂还无脑接团，完全没有视野和运营概念的人。", weight: [+2, -1, +1, -1] },
+            { text: "极度自私，只顾自己吃经济，团战永远不肯抗伤的人。", weight: [+3, +1, -1, +1] },
+            { text: "顺风浪逆风投，稍微有点劣势就开始点投降不想赢的人。", weight: [+1, +1, +1, +2] }
+        ]
+    }
+];
+
+        // 3. 系统状态变量
+        let currentQuestionIndex = 0;
+        let userScore = [5.0, 5.0, 5.0, 5.0]; // 初始玩家基准分
+
+        // 4. UI 逻辑控制
+        function startQuiz() {
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = QUESTIONS[currentQuestionIndex];
+            document.getElementById('question-counter').innerText = `题目 ${currentQuestionIndex + 1} / ${QUESTIONS.length}`;
+            document.getElementById('question-text').innerText = q.q;
+            
+            // 更新进度条
+            const progress = ((currentQuestionIndex) / QUESTIONS.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ''; // 清空上一题选项
+            
+            q.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-700 border border-slate-600 rounded-lg p-4 text-slate-200 option-btn";
+                btn.innerText = opt.text;
+                btn.onclick = () => handleAnswer(opt.weight);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(weightArray) {
+            // 累加向量分数
+            for(let i=0; i<4; i++) {
+                userScore[i] += weightArray[i];
+            }
+            
+            currentQuestionIndex++;
+            if (currentQuestionIndex < QUESTIONS.length) {
+                renderQuestion();
+            } else {
+                calculateResult();
+            }
+        }
+
+        // 5. 核心余弦距离/欧氏距离匹配算法
+        function calculateResult() {
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            let bestMatch = CHAMPIONS[0];
+            let minDistance = Infinity;
+
+            CHAMPIONS.forEach(champ => {
+                // 计算欧氏距离：Math.sqrt( (u0-c0)^2 + (u1-c1)^2 + ... )
+                let sumOfSquares = 0;
+                for(let i=0; i<4; i++) {
+                    sumOfSquares += Math.pow(userScore[i] - champ.vector[i], 2);
+                }
+                const distance = Math.sqrt(sumOfSquares);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestMatch = champ;
+                }
+            });
+
+            document.getElementById('result-champ').innerText = bestMatch.name;
+            document.getElementById('result-stats').innerHTML = 
+                `团队意识: ${userScore[0].toFixed(1)} <br>
+                 激进狂暴: ${userScore[1].toFixed(1)} <br>
+                 微操手法: ${userScore[2].toFixed(1)} <br>
+                 刀尖风险: ${userScore[3].toFixed(1)}`;
+        }
+    </script>
+</body>
+</html>
