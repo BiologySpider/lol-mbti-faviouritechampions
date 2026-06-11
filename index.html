@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>英雄联盟 16型人格测试 (LoL-MBTI) - 终极版</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .neon-border { box-shadow: 0 0 10px #0ea5e9, inset 0 0 10px #0ea5e9; border: 1px solid #0ea5e9; }
@@ -38,18 +39,36 @@
 
         <div id="screen-result" class="hidden text-center">
             <h2 class="text-2xl font-bold text-slate-300 mb-2">测序完成，你的灵魂载体是：</h2>
-            <h1 id="result-champ" class="text-5xl font-black text-amber-400 my-6 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">加载中...</h1>
+            <h1 id="result-champ" class="text-5xl font-black text-amber-400 mt-4 mb-1 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">加载中...</h1>
+            <h3 id="result-mbti" class="text-xl font-bold text-sky-400 tracking-widest mb-4">ESTJ</h3>
+            
+            <div class="w-full max-w-[320px] mx-auto mb-6 bg-slate-700/30 rounded-xl p-2">
+                <canvas id="radarChart"></canvas>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6 text-left">
+                <div class="bg-slate-700 rounded-lg p-3 border border-emerald-500/30">
+                    <p class="text-xs text-emerald-400 mb-1">🤝 最佳双排 (互补)</p>
+                    <p id="result-duo" class="text-lg font-bold text-white">加载中</p>
+                </div>
+                <div class="bg-slate-700 rounded-lg p-3 border border-rose-500/30">
+                    <p class="text-xs text-rose-400 mb-1">⚔️ 一生之敌 (相克)</p>
+                    <p id="result-nemesis" class="text-lg font-bold text-white">加载中</p>
+                </div>
+            </div>
             
             <div class="bg-slate-700 rounded-lg p-4 mb-6 text-left text-sm text-slate-300">
-                <p class="mb-2">📊 <span class="font-bold text-white">行为学分析雷达：</span></p>
-                <p id="result-stats" class="font-mono text-sky-300"></p>
-                <div class="mt-4 border-t border-slate-600 pt-3">
+                <div class="border-b border-slate-600 pb-3 mb-3">
+                    <p class="mb-1">🎯 <span class="font-bold text-white">操作初筛入围 (Top 5)：</span></p>
+                    <p id="result-top5" class="text-slate-400 text-xs leading-relaxed"></p>
+                </div>
+                <div>
                     <p class="mb-1">🧬 <span class="font-bold text-white">引起共鸣的灵魂标签：</span></p>
                     <p id="result-tags" class="text-amber-300 text-sm leading-relaxed font-bold"></p>
                 </div>
             </div>
             
-            <button onclick="location.reload()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded transition-colors">
+            <button onclick="location.reload()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded transition-colors mb-4">
                 ↻ 重新测试
             </button>
         </div>
@@ -94,7 +113,7 @@
             { name: "远古恐惧", vector: [7.5, 4.0, 8.0, 3.0], tags: ["纯粹邪恶", "惊悚", "怪物"] },
             { name: "无双剑姬", vector: [6.0, 8.5, 4.0, 6.0], tags: ["优雅", "决斗者", "高操作"] },
             { name: "潮汐海灵", vector: [2.0, 9.0, 9.0, 9.5], tags: ["搞怪", "灵动", "海怪"] },
-            { name: "正义巨像", vector: [9.5, 5.0, 4.0, 4.0], tags: ["守护者", "巨兽", "正义", "坚定"] }, // 战神特调
+            { name: "正义巨像", vector: [9.5, 5.0, 4.0, 4.0], tags: ["守护者", "巨兽", "正义", "坚定"] },
             { name: "海洋之灾", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂傲", "无情", "海盗"] },
             { name: "德玛西亚之力", vector: [6.0, 8.0, 1.5, 5.0], tags: ["猛男", "正义", "领袖"] },
             { name: "迷失之牙", vector: [6.0, 8.5, 4.0, 6.0], tags: ["双面", "巨兽", "狂暴"] },
@@ -158,7 +177,7 @@
             { name: "发条魔灵", vector: [7.5, 4.0, 8.0, 3.0], tags: ["机甲科技", "悲剧", "傀儡"] },
             { name: "山隐之焰", vector: [9.0, 8.0, 4.0, 8.0], tags: ["工匠", "神明", "孤单"] },
             { name: "不屈之枪", vector: [2.0, 9.0, 9.0, 9.5], tags: ["凡人", "不屈", "战神"] },
-            { name: "圣锤之毅", vector: [9.0, 6.0, 5.0, 5.0], tags: ["英雄", "保护者", "坚定", "重甲"] }, // 战神特调
+            { name: "圣锤之毅", vector: [9.0, 6.0, 5.0, 5.0], tags: ["英雄", "保护者", "坚定", "重甲"] }, 
             { name: "血港鬼影", vector: [2.0, 9.0, 9.0, 9.5], tags: ["疯批", "连环杀手", "幽灵"] },
             { name: "元素女皇", vector: [2.0, 9.0, 9.0, 9.5], tags: ["女皇", "狂傲", "天才"] },
             { name: "德玛西亚之翼", vector: [6.0, 8.5, 4.0, 6.0], tags: ["游侠", "正义", "军人"] },
@@ -170,7 +189,7 @@
             { name: "荒漠屠夫", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴怒", "疯狂", "巨兽"] },
             { name: "傲之追猎者", vector: [2.0, 9.0, 9.0, 9.5], tags: ["猎手", "野性", "孤狼"] },
             { name: "放逐之刃", vector: [6.0, 8.5, 4.0, 6.0], tags: ["放逐", "悲剧", "高操作"] },
-            { name: "机械公敌", vector: [8.5, 6.0, 7.0, 4.0], tags: ["约德尔", "机甲科技", "暴躁", "搞怪"] }, // 战神特调
+            { name: "机械公敌", vector: [8.5, 6.0, 7.0, 4.0], tags: ["约德尔", "机甲科技", "暴躁", "搞怪"] }, 
             { name: "符文法师", vector: [7.5, 4.0, 8.0, 3.0], tags: ["学者", "流浪者", "守护者"] },
             { name: "沙漠玫瑰", vector: [3.0, 8.0, 9.0, 8.5], tags: ["御姐", "狂傲", "赏金猎人"] },
             { name: "北地之怒", vector: [9.0, 8.0, 4.0, 8.0], tags: ["女皇", "暴君", "征服者"] },
@@ -232,7 +251,7 @@
             { name: "荆棘之兴", vector: [7.5, 4.0, 8.0, 3.0], tags: ["怪物", "自然", "诱惑"] }
         ];
 
-        // 2. 60 题终极题库：Q1-Q10 灵魂标签收集，Q11-Q60 行为权重测试
+        // 2. 60 题终极题库
         const QUESTIONS = [
             // ==========================================
             // 🏷️ 第零域：灵魂侧写与美学投射 (Q1 - Q10，专门收集 Tags)
@@ -803,6 +822,7 @@
         let currentQuestionIndex = 0;
         let userScore = [5.0, 5.0, 5.0, 5.0]; // 初始玩家操作基准分
         let userTags = []; // 初始玩家收集到的灵魂标签
+        let radarChartInstance = null; // 图表实例
 
         // 4. UI 逻辑控制
         function startQuiz() {
@@ -821,14 +841,14 @@
             document.getElementById('progress-bar').style.width = `${progress}%`;
 
             const optionsContainer = document.getElementById('options-container');
-            optionsContainer.innerHTML = ''; // 清空上一题选项
+            optionsContainer.innerHTML = ''; 
             
             q.options.forEach((opt) => {
                 const btn = document.createElement('button');
                 btn.className = "w-full text-left bg-slate-700 border border-slate-600 rounded-lg p-4 text-slate-200 option-btn";
                 btn.innerText = opt.text;
                 
-                // 【核心升级】判断当前选项传递的是标签数组还是分值数组
+                // 判断当前选项传递的是标签数组还是分值数组
                 const payload = opt.tags ? opt.tags : opt.weight;
                 btn.onclick = () => handleAnswer(payload);
                 
@@ -837,11 +857,11 @@
         }
 
         function handleAnswer(payload) {
-            // 如果传来的是标签（第一域的题目）
+            // 如果传来的是标签（前 10 题）
             if (typeof payload[0] === 'string') {
                 userTags = userTags.concat(payload);
             } 
-            // 如果传来的是操作分值（后续行为题）
+            // 如果传来的是操作分值（后 50 题）
             else {
                 for(let i=0; i<4; i++) {
                     userScore[i] += payload[i];
@@ -856,21 +876,26 @@
             }
         }
 
-        // 5. 终极级联引擎：操作 Top5 初筛 + 灵魂 Jaccard 决选
+        // 5. 终极级联引擎：初筛 + 决选 + 雷达图渲染 + 羁绊生成
         function calculateResult() {
             document.getElementById('screen-quiz').classList.add('hidden');
             document.getElementById('screen-result').classList.remove('hidden');
 
-            // 1. 分数平滑压缩 (将 50 题带来的巨大偏差压缩回雷达图 0.1 - 9.9)
+            // --- A. 分数平滑压缩 ---
             let finalVector = [0, 0, 0, 0];
             for(let i=0; i<4; i++) {
                 let scaled = 5.0 + (userScore[i] - 5.0) * 0.12;
                 finalVector[i] = Math.max(0.1, Math.min(9.9, scaled));
             }
 
-            // ==========================================
-            // Stage 1: 操作习惯初筛 (Cosine Similarity)
-            // ==========================================
+            // --- B. 生成 MBTI 峡谷代码 ---
+            let mbti = "";
+            mbti += finalVector[0] >= 5.0 ? "E" : "I"; // E:团队支援 I:孤狼单带
+            mbti += finalVector[2] >= 5.0 ? "S" : "N"; // S:极致微操 N:宏观意识
+            mbti += finalVector[3] >= 5.0 ? "F" : "T"; // F:赌徒激进 T:理智止损
+            mbti += finalVector[1] >= 5.0 ? "J" : "P"; // J:果断开团 P:隐忍发育
+            
+            // --- C. 操作习惯初筛 (Cosine Similarity) ---
             let scoredChampions = CHAMPIONS.map(champ => {
                 let dotProduct = 0;
                 let normA = 0;
@@ -881,62 +906,125 @@
                     normB += Math.pow(champ.vector[i], 2);
                 }
                 let rawCosine = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-                let cosineNorm = (rawCosine + 1) / 2; // 映射到 0~1
-                
-                return { ...champ, cosineScore: cosineNorm };
+                return { ...champ, cosineScore: (rawCosine + 1) / 2 };
             });
 
-            // 按操作相似度降序排列，只截取前 5 名进入“决赛圈”
+            // 降序排列，取前 5 进决赛
             scoredChampions.sort((a, b) => b.cosineScore - a.cosineScore);
             let top5Champions = scoredChampions.slice(0, 5);
 
-            // ==========================================
-            // Stage 2: 灵魂标签决选 (Jaccard Index 交并比)
-            // ==========================================
+            // --- D. 灵魂标签决选 (Jaccard Index) ---
             let bestMatch = top5Champions[0];
             let maxJaccard = -1;
 
             top5Champions.forEach(champ => {
-                // 计算交集 (命中标签数)
                 let intersection = 0;
-                champ.tags.forEach(tag => {
-                    if (userTags.includes(tag)) intersection++;
-                });
+                champ.tags.forEach(tag => { if (userTags.includes(tag)) intersection++; });
                 
-                // 计算并集 (你的标签总数 + 英雄标签总数 - 交集)
-                // 防止除以 0 的情况
                 let union = userTags.length + champ.tags.length - intersection;
                 let jaccardIndex = union === 0 ? 0 : (intersection / union);
                 
-                champ.jaccardScore = jaccardIndex;
-
-                // 寻找 Jaccard 得分最高的英雄
                 if (jaccardIndex > maxJaccard) {
                     maxJaccard = jaccardIndex;
                     bestMatch = champ;
                 } else if (jaccardIndex === maxJaccard) {
-                    // 如果灵魂契合度一样，按操作分数(Cosine)定胜负
-                    if (champ.cosineScore > bestMatch.cosineScore) {
-                        bestMatch = champ;
-                    }
+                    if (champ.cosineScore > bestMatch.cosineScore) bestMatch = champ;
                 }
             });
 
-            // 3. 渲染结果与图表
-            let matchedTags = bestMatch.tags.filter(tag => userTags.includes(tag));
-            let tagDisplay = matchedTags.length > 0 ? matchedTags.join(" / ") : "神秘且独特的灵魂";
+            // --- E. 寻找羁绊 (最佳双排 & 一生之敌) ---
+            // 宿敌：操作相似度最低的人 (列表最后一个)
+            let nemesis = scoredChampions[scoredChampions.length - 1];
             
-            // 为了让你看清楚算法的运作，我们把 Top 5 名单也打印在屏幕上
+            // 最佳双排 (修复版)：只反转“团队”和“激进”达成互补，但保留相同的“微操”和“风险”频段
+            // 比如：稳健的软辅应该找一个稳健的重装战士双排，而不是乱送的刺客
+            let duoVector = [
+                10 - finalVector[0], // 团队意识互补反转
+                10 - finalVector[1], // 激进杀心互补反转
+                finalVector[2],      // 保持微操步调一致
+                finalVector[3]       // 保持风险偏好一致
+            ];
+            
+            let bestDuo = CHAMPIONS[0];
+            let maxDuoCosine = -Infinity;
+            
+            CHAMPIONS.forEach(champ => {
+                // 双排不能是自己，也不能是宿敌
+                if (champ.name === bestMatch.name || champ.name === nemesis.name) return;
+                
+                let dotP = 0, nA = 0, nB = 0;
+                for(let i=0; i<4; i++) {
+                    dotP += duoVector[i] * champ.vector[i];
+                    nA += Math.pow(duoVector[i], 2);
+                    nB += Math.pow(champ.vector[i], 2);
+                }
+                let sim = dotP / (Math.sqrt(nA) * Math.sqrt(nB));
+                
+                if(sim > maxDuoCosine) {
+                    maxDuoCosine = sim;
+                    bestDuo = champ;
+                }
+            });
+
+            // --- F. 渲染文本信息 ---
+            let matchedTags = bestMatch.tags.filter(tag => userTags.includes(tag));
+            let tagDisplay = matchedTags.length > 0 ? matchedTags.join(" / ") : "你的灵魂极其独特，无明确标签。";
             let top5Names = top5Champions.map(c => c.name).join("、");
 
             document.getElementById('result-champ').innerText = bestMatch.name;
-            document.getElementById('result-stats').innerHTML = 
-                `团队防线: ${finalVector[0].toFixed(1)} <br>
-                 激进杀心: ${finalVector[1].toFixed(1)} <br>
-                 极限微操: ${finalVector[2].toFixed(1)} <br>
-                 刀尖舔血: ${finalVector[3].toFixed(1)} <br><br>
-                 <span class="text-xs text-slate-400">🎯 操作初筛入围 (Top 5)：${top5Names}</span>`;
+            document.getElementById('result-mbti').innerText = `峡谷 MBTI: ${mbti}`;
+            document.getElementById('result-duo').innerText = bestDuo.name;
+            document.getElementById('result-nemesis').innerText = nemesis.name;
+            document.getElementById('result-top5').innerText = top5Names;
             document.getElementById('result-tags').innerText = tagDisplay;
+
+            // --- G. 绘制赛博朋克雷达图 (Chart.js) ---
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInstance) radarChartInstance.destroy(); // 避免重新测试时重叠
+            
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['团队防线', '激进杀心', '极限微操', '刀尖舔血'],
+                    datasets: [
+                        {
+                            label: '你的灵魂波形',
+                            data: [finalVector[0].toFixed(1), finalVector[1].toFixed(1), finalVector[2].toFixed(1), finalVector[3].toFixed(1)],
+                            backgroundColor: 'rgba(56, 189, 248, 0.4)', // Tailwind sky-400
+                            borderColor: 'rgba(56, 189, 248, 1)',
+                            pointBackgroundColor: 'rgba(251, 191, 36, 1)', // Tailwind amber-400
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(251, 191, 36, 1)',
+                            borderWidth: 2,
+                        },
+                        {
+                            label: '本命英雄标定波形',
+                            data: [bestMatch.vector[0], bestMatch.vector[1], bestMatch.vector[2], bestMatch.vector[3]],
+                            backgroundColor: 'rgba(244, 63, 94, 0.2)', // Tailwind rose-500
+                            borderColor: 'rgba(244, 63, 94, 0.5)',
+                            borderWidth: 1,
+                            borderDash: [5, 5] // 虚线表示英雄标准参考线
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: {
+                                color: 'rgba(148, 163, 184, 1)', // slate-400
+                                font: { size: 12, family: 'sans-serif', weight: 'bold' }
+                            },
+                            ticks: { display: false, min: 0, max: 10 } // 隐藏绝对数值刻度
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1' } } // slate-300
+                    }
+                }
+            });
         }
     </script>
 </body>
