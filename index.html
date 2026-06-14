@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英雄联盟 16型人格测试 (LoL-MBTI) - 终极版</title>
+    <title>英雄联盟 16型人格测试 (LoL-MBTI) - V4.1 视觉完全体</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .neon-border { box-shadow: 0 0 10px #0ea5e9, inset 0 0 10px #0ea5e9; border: 1px solid #0ea5e9; }
         .neon-text { text-shadow: 0 0 5px #38bdf8; }
         .option-btn:hover { background-color: #1e293b; border-color: #38bdf8; box-shadow: 0 0 8px #38bdf8; transform: scale(1.02); transition: all 0.2s; }
+        #share-card { background: linear-gradient(145deg, #1e293b, #0f172a); }
+        .splash-gradient { background: linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0) 100%); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -20,7 +23,7 @@
         <div id="screen-start" class="text-center">
             <h1 class="text-4xl font-black mb-4 neon-text tracking-wider">LoL - MBTI</h1>
             <p class="text-slate-400 mb-8">用最硬核的 60 道探针，测出你在峡谷中的真实灵魂与本命英雄。</p>
-            <button onclick="startQuiz()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors">
+            <button onclick="startQuiz()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors shadow-[0_0_15px_rgba(2,132,199,0.5)]">
                 ⚡ 启动基因测序
             </button>
         </div>
@@ -29,226 +32,242 @@
             <div class="w-full bg-slate-700 rounded-full h-2 mb-6">
                 <div id="progress-bar" class="bg-sky-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
-            
             <p id="question-counter" class="text-sky-400 text-sm font-bold mb-2">题目 1 / 60</p>
             <h2 id="question-text" class="text-xl font-semibold mb-6 leading-relaxed">题目加载中...</h2>
-            
-            <div id="options-container" class="space-y-4">
-            </div>
+            <div id="options-container" class="space-y-4"></div>
         </div>
 
         <div id="screen-result" class="hidden text-center">
-            <h2 class="text-2xl font-bold text-slate-300 mb-2">测序完成，你的灵魂载体是：</h2>
-            <h1 id="result-champ" class="text-5xl font-black text-amber-400 mt-4 mb-1 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">加载中...</h1>
-            <h3 id="result-mbti" class="text-xl font-bold text-sky-400 tracking-widest mb-4">ESTJ</h3>
             
-            <div class="w-full max-w-[320px] mx-auto mb-6 bg-slate-700/30 rounded-xl p-2">
-                <canvas id="radarChart"></canvas>
-            </div>
+            <div id="share-card" class="rounded-xl border border-slate-700 shadow-2xl relative overflow-hidden pb-6">
+                
+                <div class="w-full h-56 sm:h-72 relative">
+                    <img id="champ-splash" crossorigin="anonymous" src="" alt="Splash" class="w-full h-full object-cover object-top opacity-80">
+                    <div class="absolute inset-0 splash-gradient z-10"></div>
+                    
+                    <div class="absolute top-4 left-0 w-full text-center z-20 opacity-50">
+                        <p class="text-[10px] tracking-[0.3em] text-sky-300 uppercase">League of Legends • MBTI</p>
+                    </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6 text-left">
-                <div class="bg-slate-700 rounded-lg p-3 border border-emerald-500/30">
-                    <p class="text-xs text-emerald-400 mb-1">🤝 最佳双排 (互补)</p>
-                    <p id="result-duo" class="text-lg font-bold text-white">加载中</p>
+                    <div class="absolute bottom-4 left-0 w-full text-center z-20">
+                        <p class="text-slate-300 text-sm font-bold tracking-widest mb-1 shadow-black drop-shadow-md">你的灵魂载体</p>
+                        <h1 id="result-champ" class="text-5xl font-black text-amber-400 mb-1 drop-shadow-[0_0_15px_rgba(0,0,0,1)]" style="-webkit-text-stroke: 1px rgba(0,0,0,0.5);">加载中</h1>
+                        <h3 id="result-mbti" class="text-2xl font-black text-sky-400 tracking-[0.3em] drop-shadow-[0_0_10px_rgba(0,0,0,1)]">ESTJ</h3>
+                    </div>
                 </div>
-                <div class="bg-slate-700 rounded-lg p-3 border border-rose-500/30">
-                    <p class="text-xs text-rose-400 mb-1">⚔️ 一生之敌 (相克)</p>
-                    <p id="result-nemesis" class="text-lg font-bold text-white">加载中</p>
+                
+                <div class="px-6 mt-6">
+                    <div class="w-full max-w-[300px] mx-auto mb-6 bg-slate-900/50 rounded-full p-4 border border-slate-700 shadow-inner">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6 text-left">
+                        <div class="bg-slate-800/80 rounded-lg p-3 border border-emerald-500/40 shadow-lg">
+                            <p class="text-[11px] text-emerald-400 mb-1">🤝 最佳双排 (互补)</p>
+                            <p id="result-duo" class="text-base font-bold text-white tracking-wide">加载中</p>
+                        </div>
+                        <div class="bg-slate-800/80 rounded-lg p-3 border border-rose-500/40 shadow-lg">
+                            <p class="text-[11px] text-rose-400 mb-1">⚔️ 一生之敌 (相克)</p>
+                            <p id="result-nemesis" class="text-base font-bold text-white tracking-wide">加载中</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-800/80 rounded-lg p-4 text-left text-sm text-slate-300 border border-slate-700 shadow-lg">
+                        <div class="border-b border-slate-600/50 pb-3 mb-3">
+                            <p class="mb-1 text-xs">🎯 <span class="font-bold text-white">操作初筛入围 (Top 5)：</span></p>
+                            <p id="result-top5" class="text-slate-400 text-[11px] leading-relaxed"></p>
+                        </div>
+                        <div>
+                            <p class="mb-1 text-xs">🧬 <span class="font-bold text-white">引起共鸣的灵魂标签：</span></p>
+                            <p id="result-tags" class="text-amber-300 text-sm leading-relaxed font-bold tracking-wide"></p>
+                        </div>
+                    </div>
                 </div>
+            </div> <div id="action-buttons" class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="downloadShareCard()" id="download-btn" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    生成专属图谱
+                </button>
+                <button onclick="location.reload()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors border border-slate-600">
+                    ↻ 重新测试
+                </button>
             </div>
             
-            <div class="bg-slate-700 rounded-lg p-4 mb-6 text-left text-sm text-slate-300">
-                <div class="border-b border-slate-600 pb-3 mb-3">
-                    <p class="mb-1">🎯 <span class="font-bold text-white">操作初筛入围 (Top 5)：</span></p>
-                    <p id="result-top5" class="text-slate-400 text-xs leading-relaxed"></p>
-                </div>
-                <div>
-                    <p class="mb-1">🧬 <span class="font-bold text-white">引起共鸣的灵魂标签：</span></p>
-                    <p id="result-tags" class="text-amber-300 text-sm leading-relaxed font-bold"></p>
-                </div>
-            </div>
-            
-            <button onclick="location.reload()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded transition-colors mb-4">
-                ↻ 重新测试
-            </button>
         </div>
     </div>
 
     <script>
-        // 1. 带标签的终极英雄数据库 (172 英雄)
+        // 1. 终极英雄数据库 (含 Riot 官方 ID、坐标向量、灵魂标签)
         const CHAMPIONS = [
-            { name: "暗裔剑魔", vector: [6.0, 8.5, 4.0, 6.0], tags: ["天神陨落", "猛男", "近战狂战士"] },
-            { name: "九尾妖狐", vector: [2.0, 9.0, 9.0, 9.5], tags: ["高颜值", "灵动", "迷人"] },
-            { name: "离群之刺", vector: [2.0, 9.0, 9.5, 9.0], tags: ["孤狼", "冷酷刺客", "高操作"] },
-            { name: "影哨", vector: [4.0, 8.0, 7.0, 8.0], tags: ["游侠", "救世主", "正义"] },
-            { name: "牛头酋长", vector: [9.0, 8.0, 4.0, 8.0], tags: ["巨兽", "保护者", "可靠"] },
-            { name: "铁血狼母", vector: [6.0, 8.5, 4.0, 6.0], tags: ["军阀", "御姐", "暴怒"] },
-            { name: "殇之木乃伊", vector: [9.0, 8.0, 4.0, 8.0], tags: ["悲惨身世", "孤单", "悲剧"] },
-            { name: "冰晶凤凰", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "守护者", "高智商"] },
-            { name: "黑暗之女", vector: [7.5, 4.0, 8.0, 3.0], tags: ["腹黑萝莉", "火爆", "悲惨身世"] },
-            { name: "残月之肃", vector: [4.0, 6.0, 10.0, 7.0], tags: ["冷酷刺客", "信仰", "高操作"] },
-            { name: "寒冰射手", vector: [3.0, 8.0, 9.0, 8.5], tags: ["领袖", "高颜值", "正义"] },
-            { name: "铸星龙王", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "狂傲", "创世者"] },
-            { name: "双界灵兔", vector: [6.0, 4.0, 8.0, 4.0], tags: ["萌物", "神秘", "灵动"] },
-            { name: "沙漠皇帝", vector: [7.5, 4.0, 8.0, 3.0], tags: ["帝王", "领袖", "高智商"] },
-            { name: "星界游神", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神秘", "神明", "游荡者"] },
-            { name: "虚空女皇", vector: [6.0, 8.5, 4.0, 6.0], tags: ["女皇", "怪物", "统治者"] },
-            { name: "蒸汽机器人", vector: [9.0, 8.0, 4.0, 8.0], tags: ["机甲科技", "搞怪", "无情"] },
-            { name: "复仇焰魂", vector: [7.5, 4.0, 8.0, 3.0], tags: ["复仇", "狂暴", "怪物"] },
-            { name: "弗雷尔卓德之心", vector: [9.0, 8.0, 4.0, 8.0], tags: ["猛男", "保护者", "正义"] },
-            { name: "狂厄蔷薇", vector: [3.0, 10.0, 3.0, 9.0], tags: ["疯批", "嗜血", "怪物"] },
-            { name: "皮城女警", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "执法者", "御姐"] },
-            { name: "青钢影", vector: [6.0, 8.5, 4.0, 6.0], tags: ["御姐", "冷酷刺客", "机甲科技"] },
-            { name: "魔蛇之拥", vector: [7.5, 4.0, 8.0, 3.0], tags: ["怪物", "阴险", "优雅"] },
-            { name: "虚空恐惧", vector: [6.0, 8.5, 4.0, 6.0], tags: ["巨兽", "毁灭", "怪物"] },
-            { name: "英勇投弹手", vector: [6.0, 8.5, 4.0, 6.0], tags: ["机甲科技", "搞怪", "勇敢"] },
-            { name: "诺克萨斯之手", vector: [5.0, 9.0, 3.0, 6.0], tags: ["猛男", "领袖", "军阀"] },
-            { name: "皎月女神", vector: [2.0, 9.0, 9.0, 9.5], tags: ["异类", "冷酷刺客", "信仰"] },
-            { name: "祖安狂人", vector: [6.0, 8.5, 4.0, 6.0], tags: ["疯批", "猛男", "搞怪"] },
-            { name: "荣耀行刑官", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂傲", "暴怒", "无情"] },
-            { name: "时间刺客", vector: [2.0, 9.0, 9.0, 9.5], tags: ["天才", "少年", "灵动"] },
-            { name: "蜘蛛女皇", vector: [6.0, 8.5, 4.0, 6.0], tags: ["阴险", "怪物", "诱惑"] },
-            { name: "痛苦之拥", vector: [2.0, 9.0, 9.0, 9.5], tags: ["恶魔", "魅惑", "阴暗"] },
-            { name: "探险家", vector: [3.0, 8.0, 9.0, 8.5], tags: ["帅哥", "游侠", "灵动"] },
-            { name: "远古恐惧", vector: [7.5, 4.0, 8.0, 3.0], tags: ["纯粹邪恶", "惊悚", "怪物"] },
-            { name: "无双剑姬", vector: [6.0, 8.5, 4.0, 6.0], tags: ["优雅", "决斗者", "高操作"] },
-            { name: "潮汐海灵", vector: [2.0, 9.0, 9.0, 9.5], tags: ["搞怪", "灵动", "海怪"] },
-            { name: "正义巨像", vector: [9.5, 5.0, 4.0, 4.0], tags: ["守护者", "巨兽", "正义", "坚定"] },
-            { name: "海洋之灾", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂傲", "无情", "海盗"] },
-            { name: "德玛西亚之力", vector: [6.0, 8.0, 1.5, 5.0], tags: ["猛男", "正义", "领袖"] },
-            { name: "迷失之牙", vector: [6.0, 8.5, 4.0, 6.0], tags: ["双面", "巨兽", "狂暴"] },
-            { name: "酒桶", vector: [7.5, 4.0, 8.0, 3.0], tags: ["搞怪", "大叔", "快乐"] },
-            { name: "法外狂徒", vector: [6.0, 8.5, 4.0, 6.0], tags: ["法外狂徒", "大叔", "猛男"] },
-            { name: "灵罗娃娃", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高颜值", "哥特萝莉", "灵动"] },
-            { name: "战争之影", vector: [6.0, 8.5, 4.0, 6.0], tags: ["幽灵", "狂暴", "怪物"] },
-            { name: "大发明家", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高智商", "机甲科技", "搞怪"] },
-            { name: "异画师", vector: [7.0, 3.0, 9.5, 3.0], tags: ["帅哥", "优雅", "悲惨身世", "艺术"] },
-            { name: "海兽祭司", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂热", "信仰", "猛男"] },
-            { name: "刀锋舞者", vector: [6.0, 8.5, 4.0, 6.0], tags: ["高颜值", "领袖", "反抗者"] },
-            { name: "翠神", vector: [9.5, 1.0, 3.0, 1.0], tags: ["守护者", "和平", "神秘"] },
-            { name: "风暴之怒", vector: [9.5, 1.0, 3.0, 1.0], tags: ["神明", "守护者", "高颜值"] },
-            { name: "德玛西亚皇子", vector: [6.0, 8.5, 4.0, 6.0], tags: ["皇子", "领袖", "正义"] },
-            { name: "武器大师", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神秘", "宗师", "无敌"] },
-            { name: "未来守护者", vector: [6.0, 8.5, 4.0, 6.0], tags: ["高颜值", "机甲科技", "正义"] },
-            { name: "戏命师", vector: [3.0, 8.0, 9.0, 8.5], tags: ["优雅", "疯批", "连环杀手", "艺术"] },
-            { name: "暴走萝莉", vector: [3.0, 8.0, 9.0, 8.5], tags: ["疯批", "反叛", "灵动"] },
-            { name: "纳祖芒荣耀", vector: [6.0, 8.5, 4.0, 6.0], tags: ["猛男", "守护者", "坚定"] },
-            { name: "虚空之女", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "幸存者", "猎手"] },
-            { name: "复仇之矛", vector: [3.0, 8.0, 9.0, 8.5], tags: ["幽灵", "复仇", "背叛"] },
-            { name: "天启者", vector: [9.5, 1.0, 3.0, 1.0], tags: ["领袖", "智慧", "平衡"] },
-            { name: "死亡颂唱者", vector: [7.5, 4.0, 8.0, 3.0], tags: ["幽灵", "死亡", "狂热"] },
-            { name: "虚空行者", vector: [2.0, 9.0, 9.0, 9.5], tags: ["复仇", "虚空", "游侠"] },
-            { name: "不祥之刃", vector: [2.0, 9.0, 9.0, 9.5], tags: ["御姐", "冷酷刺客", "无情"] },
-            { name: "正义天使", vector: [6.0, 8.5, 4.0, 6.0], tags: ["正义", "审判", "无情"] },
-            { name: "影流之镰", vector: [6.0, 8.5, 4.0, 6.0], tags: ["孤狼", "狂傲", "黑暗"] },
-            { name: "狂暴之心", vector: [7.5, 4.0, 8.0, 3.0], tags: ["灵动", "忍者", "均衡"] },
-            { name: "虚空掠夺者", vector: [6.0, 8.5, 4.0, 6.0], tags: ["怪物", "进化", "冷酷刺客"] },
-            { name: "永猎双子", vector: [3.0, 8.0, 9.0, 8.5], tags: ["死神", "神秘", "双生"] },
-            { name: "暴怒骑士", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴怒", "骑士", "无情"] },
-            { name: "深渊巨口", vector: [3.0, 8.0, 9.0, 8.5], tags: ["怪物", "饥饿", "虚空"] },
-            { name: "诡术妖姬", vector: [2.0, 9.0, 9.0, 9.5], tags: ["阴险", "幕后黑手", "优雅"] },
-            { name: "盲僧", vector: [5.0, 8.5, 9.5, 8.0], tags: ["宗师", "苦行僧", "高操作"] },
-            { name: "曙光女神", vector: [9.0, 8.0, 4.0, 8.0], tags: ["信仰", "正义", "保护者", "重甲"] },
-            { name: "含羞蓓蕾", vector: [6.0, 8.5, 4.0, 6.0], tags: ["萌物", "和平", "精灵"] },
-            { name: "冰霜女巫", vector: [7.5, 4.0, 8.0, 3.0], tags: ["女皇", "幕后黑手", "冷酷"] },
-            { name: "圣枪游侠", vector: [3.0, 8.0, 9.0, 8.5], tags: ["复仇", "游侠", "双枪"] },
-            { name: "仙灵女巫", vector: [9.5, 1.0, 3.0, 1.0], tags: ["萌物", "精灵", "魔法"] },
-            { name: "光辉女郎", vector: [6.0, 8.5, 4.0, 6.0], tags: ["美少女", "正义", "乐观"] },
-            { name: "熔岩巨兽", vector: [9.0, 7.0, 1.5, 6.0], tags: ["巨兽", "憨憨", "不可阻挡"] },
-            { name: "虚空先知", vector: [7.5, 4.0, 8.0, 3.0], tags: ["狂热", "预言家", "虚空"] },
-            { name: "扭曲树精", vector: [9.0, 8.0, 4.0, 8.0], tags: ["复仇", "守护者", "悲剧"] },
-            { name: "无极剑圣", vector: [2.0, 9.0, 9.0, 9.5], tags: ["宗师", "冥想", "无敌"] },
-            { name: "流光镜影", vector: [6.0, 8.5, 4.0, 6.0], tags: ["幻象", "灵动", "神秘"] },
-            { name: "明烛", vector: [9.5, 1.0, 3.0, 1.0], tags: ["少年", "温暖", "辅助"] },
-            { name: "赏金猎人", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "复仇", "海盗"] },
-            { name: "齐天大圣", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神话", "搞怪", "灵动"] },
-            { name: "铁铠冥魂", vector: [6.0, 8.5, 4.0, 6.0], tags: ["魔王", "无情", "暴君"] },
-            { name: "堕落天使", vector: [9.5, 1.0, 3.0, 1.0], tags: ["堕落", "痛苦", "悲剧"] },
-            { name: "百裂冥犬", vector: [2.0, 9.0, 9.0, 9.5], tags: ["怪物", "群袭", "暗裔"] },
-            { name: "唤潮鲛姬", vector: [9.5, 1.0, 3.0, 1.0], tags: ["高颜值", "神秘", "深海"] },
-            { name: "沙漠死神", vector: [6.0, 8.5, 4.0, 6.0], tags: ["学者", "神明", "无情"] },
-            { name: "深海泰坦", vector: [9.0, 8.0, 4.0, 8.0], tags: ["复仇", "巨兽", "深海", "保护者"] },
-            { name: "万花通灵", vector: [7.5, 4.0, 8.0, 3.0], tags: ["自然", "灵动", "百合"] },
-            { name: "狂野女猎手", vector: [2.0, 9.0, 9.0, 9.5], tags: ["御姐", "野性", "猎手"] },
-            { name: "不羁之悦", vector: [3.0, 8.0, 9.0, 8.5], tags: ["水手", "快乐", "灵动"] },
-            { name: "永恒梦魇", vector: [2.0, 9.0, 9.0, 9.5], tags: ["纯粹邪恶", "梦魇", "恐怖"] },
-            { name: "雪原双子", vector: [9.0, 8.0, 4.0, 8.0], tags: ["纯真", "巨兽", "快乐"] },
-            { name: "狂战士", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂暴", "猛男", "无情"] },
-            { name: "发条魔灵", vector: [7.5, 4.0, 8.0, 3.0], tags: ["机甲科技", "悲剧", "傀儡"] },
-            { name: "山隐之焰", vector: [9.0, 8.0, 4.0, 8.0], tags: ["工匠", "神明", "孤单"] },
-            { name: "不屈之枪", vector: [2.0, 9.0, 9.0, 9.5], tags: ["凡人", "不屈", "战神"] },
-            { name: "圣锤之毅", vector: [9.0, 6.0, 5.0, 5.0], tags: ["英雄", "保护者", "坚定", "重甲"] }, 
-            { name: "血港鬼影", vector: [2.0, 9.0, 9.0, 9.5], tags: ["疯批", "连环杀手", "幽灵"] },
-            { name: "元素女皇", vector: [2.0, 9.0, 9.0, 9.5], tags: ["女皇", "狂傲", "天才"] },
-            { name: "德玛西亚之翼", vector: [6.0, 8.5, 4.0, 6.0], tags: ["游侠", "正义", "军人"] },
-            { name: "幻翎", vector: [6.0, 8.5, 4.0, 6.0], tags: ["帅哥", "灵动", "艺术"] },
-            { name: "披甲龙龟", vector: [9.0, 8.0, 4.0, 8.0], tags: ["沉默", "神秘", "巨兽"] },
-            { name: "虚空遁地兽", vector: [6.0, 8.5, 4.0, 6.0], tags: ["女皇", "怪物", "猎手"] },
-            { name: "镕铁少女", vector: [9.0, 8.5, 4.0, 8.0], tags: ["叛逆", "机甲科技", "骑士", "重甲"] },
-            { name: "炼金男爵", vector: [9.5, 1.0, 3.0, 1.0], tags: ["军阀", "幕后黑手", "阴险"] },
-            { name: "荒漠屠夫", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴怒", "疯狂", "巨兽"] },
-            { name: "傲之追猎者", vector: [2.0, 9.0, 9.0, 9.5], tags: ["猎手", "野性", "孤狼"] },
-            { name: "放逐之刃", vector: [6.0, 8.5, 4.0, 6.0], tags: ["放逐", "悲剧", "高操作"] },
-            { name: "机械公敌", vector: [8.5, 6.0, 7.0, 4.0], tags: ["约德尔", "机甲科技", "暴躁", "搞怪"] }, 
-            { name: "符文法师", vector: [7.5, 4.0, 8.0, 3.0], tags: ["学者", "流浪者", "守护者"] },
-            { name: "沙漠玫瑰", vector: [3.0, 8.0, 9.0, 8.5], tags: ["御姐", "狂傲", "赏金猎人"] },
-            { name: "北地之怒", vector: [9.0, 8.0, 4.0, 8.0], tags: ["女皇", "暴君", "征服者"] },
-            { name: "涤魂圣枪", vector: [3.0, 8.0, 9.0, 8.5], tags: ["复仇", "幽灵", "正义"] },
-            { name: "星籁歌姬", vector: [9.0, 2.0, 4.0, 2.0], tags: ["偶像", "音乐艺术", "快乐", "高颜值"] },
-            { name: "腕豪", vector: [6.0, 9.5, 2.0, 6.0], tags: ["猛男", "黑帮大佬", "近战拳拳到肉", "暴躁"] },
-            { name: "恶魔小丑", vector: [2.0, 9.0, 9.0, 9.5], tags: ["疯批", "恶作剧", "纯粹邪恶"] },
-            { name: "暮光之眼", vector: [9.0, 8.0, 4.0, 8.0], tags: ["均衡", "领袖", "忍者"] },
-            { name: "龙血武姬", vector: [6.0, 8.5, 4.0, 6.0], tags: ["混血", "巨兽", "暴君"] },
-            { name: "炼金术士", vector: [6.0, 8.5, 4.0, 6.0], tags: ["疯批", "科学家", "搞怪"] },
-            { name: "亡灵战神", vector: [9.0, 8.0, 4.0, 8.0], tags: ["巨兽", "僵尸", "狂暴"] },
-            { name: "战争女神", vector: [3.0, 8.0, 9.0, 8.5], tags: ["赏金猎人", "雇佣兵", "自私"] },
-            { name: "上古领主", vector: [9.0, 8.0, 4.0, 8.0], tags: ["不死", "暴君", "魔法"] },
-            { name: "炽炎雏龙", vector: [3.0, 8.0, 9.0, 8.5], tags: ["萌物", "龙", "天才"] },
-            { name: "琴瑟仙女", vector: [9.5, 1.0, 3.0, 1.0], tags: ["高颜值", "音乐艺术", "哑女"] },
-            { name: "众星之子", vector: [9.5, 1.0, 3.0, 1.0], tags: ["神明", "牺牲", "救世主"] },
-            { name: "诺克萨斯统领", vector: [7.5, 4.0, 8.0, 3.0], tags: ["统帅", "高智商", "幕后黑手"] },
-            { name: "解脱者", vector: [2.0, 9.0, 9.0, 9.5], tags: ["革命者", "狂傲", "反叛"] },
-            { name: "暗黑元首", vector: [7.5, 4.0, 8.0, 3.0], tags: ["力量", "狂傲", "无情"] },
-            { name: "河流之王", vector: [9.0, 8.0, 4.0, 8.0], tags: ["恶魔", "贪婪", "交易"] },
-            { name: "岩雀", vector: [7.5, 4.0, 8.0, 3.0], tags: ["游侠", "自然", "少女"] },
-            { name: "刀锋之影", vector: [2.0, 9.0, 9.0, 9.5], tags: ["冷酷刺客", "孤狼", "无情"] },
-            { name: "瓦洛兰之盾", vector: [9.5, 1.0, 3.0, 1.0], tags: ["帅哥", "保护者", "星灵"] },
-            { name: "迅捷斥候", vector: [7.5, 4.0, 8.0, 3.0], tags: ["搞怪", "隐蔽", "斥候"] },
-            { name: "魂锁典狱长", vector: [9.0, 8.0, 4.0, 8.0], tags: ["纯粹邪恶", "幽灵", "狱卒"] },
-            { name: "麦林炮手", vector: [3.0, 8.0, 9.0, 8.5], tags: ["火爆", "少女", "炮手"] },
-            { name: "巨魔之王", vector: [6.0, 8.5, 4.0, 6.0], tags: ["巨兽", "狡诈", "国王"] },
-            { name: "蛮族之王", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂暴", "猛男", "无死"] },
-            { name: "卡牌大师", vector: [7.5, 4.0, 8.0, 3.0], tags: ["赌徒", "游侠", "狡诈"] },
-            { name: "瘟疫之源", vector: [3.0, 8.0, 9.0, 8.5], tags: ["疯狂", "怪物", "潜行"] },
-            { name: "兽灵行者", vector: [6.0, 8.5, 4.0, 6.0], tags: ["萨满", "野性", "精神"] },
-            { name: "无畏战车", vector: [6.0, 8.5, 4.0, 6.0], tags: ["机甲科技", "暴怒", "怪物"] },
-            { name: "惩戒之箭", vector: [3.0, 8.0, 9.0, 8.5], tags: ["暗裔", "复仇", "猎手"] },
-            { name: "暗夜猎手", vector: [2.0, 8.0, 9.5, 8.5], tags: ["冷酷刺客", "猎手", "孤狼"] },
-            { name: "邪恶小法师", vector: [7.5, 4.0, 8.0, 3.0], tags: ["纯粹邪恶", "搞怪", "约德尔"] },
-            { name: "虚空之眼", vector: [7.5, 4.0, 8.0, 3.0], tags: ["学者", "怪物", "分解"] },
-            { name: "愁云使者", vector: [7.0, 6.0, 6.0, 5.0], tags: ["厌世", "哥特", "阴暗"] },
-            { name: "皮城执法官", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴躁", "执法者", "近战拳拳到肉"] },
-            { name: "破败之王", vector: [2.0, 9.0, 9.0, 9.5], tags: ["痴情", "悲剧", "疯批"] },
-            { name: "奥术先驱", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高智商", "神秘", "魔法"] },
-            { name: "猩红收割者", vector: [7.5, 4.0, 8.0, 3.0], tags: ["吸血鬼", "邪恶", "优雅"] },
-            { name: "不灭狂雷", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神明", "狂暴", "巨兽"] },
-            { name: "祖安怒兽", vector: [6.0, 8.5, 4.0, 6.0], tags: ["怪物", "暴怒", "悲剧"] },
-            { name: "逆羽", vector: [3.0, 8.0, 9.0, 8.5], tags: ["反叛", "痴情", "游侠"] },
-            { name: "远古巫灵", vector: [7.5, 4.0, 8.0, 3.0], tags: ["飞升者", "魔法", "野心"] },
-            { name: "德邦总管", vector: [6.0, 8.5, 4.0, 6.0], tags: ["忠诚", "猛男", "军人"] },
-            { name: "疾风剑豪", vector: [2.0, 9.5, 10.0, 9.5], tags: ["浪子", "悲惨身世", "孤狼", "高操作"] },
-            { name: "封魔剑魂", vector: [3.0, 9.0, 9.0, 9.0], tags: ["猎手", "悲剧", "双剑", "高操作"] },
-            { name: "牧魂人", vector: [6.0, 8.5, 4.0, 6.0], tags: ["悲剧", "孤单", "掘墓"] },
-            { name: "不破之誓", vector: [6.0, 8.5, 4.0, 6.0], tags: ["守护者", "坚定", "重甲"] },
-            { name: "魔法猫咪", vector: [10.0, 0.5, 1.0, 0.5], tags: ["萌物", "快乐", "挂件", "宠物"] },
-            { name: "不落魔锋", vector: [6.0, 8.5, 4.0, 6.0], tags: ["孤狼", "反叛", "坚韧"] },
-            { name: "生化魔人", vector: [9.0, 8.0, 4.0, 8.0], tags: ["怪物", "搞怪", "实验体"] },
-            { name: "影流之主", vector: [2.0, 8.5, 9.0, 8.5], tags: ["冷酷刺客", "宗师", "黑暗"] },
-            { name: "祖安花火", vector: [3.0, 8.0, 9.0, 8.5], tags: ["少女", "活力", "电能"] },
-            { name: "爆破鬼才", vector: [7.5, 4.0, 8.0, 3.0], tags: ["疯批", "搞怪", "炸弹狂"] },
-            { name: "时光守护者", vector: [6.0, 8.5, 4.0, 6.0], tags: ["学者", "时间", "悲剧"] },
-            { name: "暮光星灵", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "搞怪", "天真"] },
-            { name: "荆棘之兴", vector: [7.5, 4.0, 8.0, 3.0], tags: ["怪物", "自然", "诱惑"] }
+            { name: "暗裔剑魔", id: "Aatrox", vector: [6.0, 8.5, 4.0, 6.0], tags: ["天神陨落", "猛男", "近战狂战士"] },
+            { name: "九尾妖狐", id: "Ahri", vector: [2.0, 9.0, 9.0, 9.5], tags: ["高颜值", "灵动", "迷人"] },
+            { name: "离群之刺", id: "Akali", vector: [2.0, 9.0, 9.5, 9.0], tags: ["孤狼", "冷酷刺客", "高操作"] },
+            { name: "影哨", id: "Akshan", vector: [4.0, 8.0, 7.0, 8.0], tags: ["游侠", "救世主", "正义"] },
+            { name: "牛头酋长", id: "Alistar", vector: [9.0, 8.0, 4.0, 8.0], tags: ["巨兽", "保护者", "可靠"] },
+            { name: "铁血狼母", id: "Ambessa", vector: [6.0, 8.5, 4.0, 6.0], tags: ["军阀", "御姐", "暴怒"] },
+            { name: "殇之木乃伊", id: "Amumu", vector: [9.0, 8.0, 4.0, 8.0], tags: ["悲惨身世", "孤单", "悲剧"] },
+            { name: "冰晶凤凰", id: "Anivia", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "守护者", "高智商"] },
+            { name: "黑暗之女", id: "Annie", vector: [7.5, 4.0, 8.0, 3.0], tags: ["腹黑萝莉", "火爆", "悲惨身世"] },
+            { name: "残月之肃", id: "Aphelios", vector: [4.0, 6.0, 10.0, 7.0], tags: ["冷酷刺客", "信仰", "高操作"] },
+            { name: "寒冰射手", id: "Ashe", vector: [3.0, 8.0, 9.0, 8.5], tags: ["领袖", "高颜值", "正义"] },
+            { name: "铸星龙王", id: "AurelionSol", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "狂傲", "创世者"] },
+            { name: "双界灵兔", id: "Aurora", vector: [6.0, 4.0, 8.0, 4.0], tags: ["萌物", "神秘", "灵动"] },
+            { name: "沙漠皇帝", id: "Azir", vector: [7.5, 4.0, 8.0, 3.0], tags: ["帝王", "领袖", "高智商"] },
+            { name: "星界游神", id: "Bard", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神秘", "神明", "游荡者"] },
+            { name: "虚空女皇", id: "Belveth", vector: [6.0, 8.5, 4.0, 6.0], tags: ["女皇", "怪物", "统治者"] },
+            { name: "蒸汽机器人", id: "Blitzcrank", vector: [9.0, 8.0, 4.0, 8.0], tags: ["机甲科技", "搞怪", "无情"] },
+            { name: "复仇焰魂", id: "Brand", vector: [7.5, 4.0, 8.0, 3.0], tags: ["复仇", "狂暴", "怪物"] },
+            { name: "弗雷尔卓德之心", id: "Braum", vector: [9.0, 8.0, 4.0, 8.0], tags: ["猛男", "保护者", "正义"] },
+            { name: "狂厄蔷薇", id: "Briar", vector: [3.0, 10.0, 3.0, 9.0], tags: ["疯批", "嗜血", "怪物"] },
+            { name: "皮城女警", id: "Caitlyn", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "执法者", "御姐"] },
+            { name: "青钢影", id: "Camille", vector: [6.0, 8.5, 4.0, 6.0], tags: ["御姐", "冷酷刺客", "机甲科技"] },
+            { name: "魔蛇之拥", id: "Cassiopeia", vector: [7.5, 4.0, 8.0, 3.0], tags: ["怪物", "阴险", "优雅"] },
+            { name: "虚空恐惧", id: "Chogath", vector: [6.0, 8.5, 4.0, 6.0], tags: ["巨兽", "毁灭", "怪物"] },
+            { name: "英勇投弹手", id: "Corki", vector: [6.0, 8.5, 4.0, 6.0], tags: ["机甲科技", "搞怪", "勇敢"] },
+            { name: "诺克萨斯之手", id: "Darius", vector: [5.0, 9.0, 3.0, 6.0], tags: ["猛男", "领袖", "军阀"] },
+            { name: "皎月女神", id: "Diana", vector: [2.0, 9.0, 9.0, 9.5], tags: ["异类", "冷酷刺客", "信仰"] },
+            { name: "祖安狂人", id: "DrMundo", vector: [6.0, 8.5, 4.0, 6.0], tags: ["疯批", "猛男", "搞怪"] },
+            { name: "荣耀行刑官", id: "Draven", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂傲", "暴怒", "无情"] },
+            { name: "时间刺客", id: "Ekko", vector: [2.0, 9.0, 9.0, 9.5], tags: ["天才", "少年", "灵动"] },
+            { name: "蜘蛛女皇", id: "Elise", vector: [6.0, 8.5, 4.0, 6.0], tags: ["阴险", "怪物", "诱惑"] },
+            { name: "痛苦之拥", id: "Evelynn", vector: [2.0, 9.0, 9.0, 9.5], tags: ["恶魔", "魅惑", "阴暗"] },
+            { name: "探险家", id: "Ezreal", vector: [3.0, 8.0, 9.0, 8.5], tags: ["帅哥", "游侠", "灵动"] },
+            { name: "远古恐惧", id: "Fiddlesticks", vector: [7.5, 4.0, 8.0, 3.0], tags: ["纯粹邪恶", "惊悚", "怪物"] },
+            { name: "无双剑姬", id: "Fiora", vector: [6.0, 8.5, 4.0, 6.0], tags: ["优雅", "决斗者", "高操作"] },
+            { name: "潮汐海灵", id: "Fizz", vector: [2.0, 9.0, 9.0, 9.5], tags: ["搞怪", "灵动", "海怪"] },
+            { name: "正义巨像", id: "Galio", vector: [9.5, 5.0, 4.0, 4.0], tags: ["守护者", "巨兽", "正义", "坚定"] },
+            { name: "海洋之灾", id: "Gangplank", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂傲", "无情", "海盗"] },
+            { name: "德玛西亚之力", id: "Garen", vector: [6.0, 8.0, 1.5, 5.0], tags: ["猛男", "正义", "领袖"] },
+            { name: "迷失之牙", id: "Gnar", vector: [6.0, 8.5, 4.0, 6.0], tags: ["双面", "巨兽", "狂暴"] },
+            { name: "酒桶", id: "Gragas", vector: [7.5, 4.0, 8.0, 3.0], tags: ["搞怪", "大叔", "快乐"] },
+            { name: "法外狂徒", id: "Graves", vector: [6.0, 8.5, 4.0, 6.0], tags: ["法外狂徒", "大叔", "猛男"] },
+            { name: "灵罗娃娃", id: "Gwen", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高颜值", "哥特萝莉", "灵动"] },
+            { name: "战争之影", id: "Hecarim", vector: [6.0, 8.5, 4.0, 6.0], tags: ["幽灵", "狂暴", "怪物"] },
+            { name: "大发明家", id: "Heimerdinger", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高智商", "机甲科技", "搞怪"] },
+            { name: "异画师", id: "Hwei", vector: [7.0, 3.0, 9.5, 3.0], tags: ["帅哥", "优雅", "悲惨身世", "艺术"] },
+            { name: "海兽祭司", id: "Illaoi", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂热", "信仰", "猛男"] },
+            { name: "刀锋舞者", id: "Irelia", vector: [6.0, 8.5, 4.0, 6.0], tags: ["高颜值", "领袖", "反抗者"] },
+            { name: "翠神", id: "Ivern", vector: [9.5, 1.0, 3.0, 1.0], tags: ["守护者", "和平", "神秘"] },
+            { name: "风暴之怒", id: "Janna", vector: [9.5, 1.0, 3.0, 1.0], tags: ["神明", "守护者", "高颜值"] },
+            { name: "德玛西亚皇子", id: "JarvanIV", vector: [6.0, 8.5, 4.0, 6.0], tags: ["皇子", "领袖", "正义"] },
+            { name: "武器大师", id: "Jax", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神秘", "宗师", "无敌"] },
+            { name: "未来守护者", id: "Jayce", vector: [6.0, 8.5, 4.0, 6.0], tags: ["高颜值", "机甲科技", "正义"] },
+            { name: "戏命师", id: "Jhin", vector: [3.0, 8.0, 9.0, 8.5], tags: ["优雅", "疯批", "连环杀手", "艺术"] },
+            { name: "暴走萝莉", id: "Jinx", vector: [3.0, 8.0, 9.0, 8.5], tags: ["疯批", "反叛", "灵动"] },
+            { name: "纳祖芒荣耀", id: "KSante", vector: [6.0, 8.5, 4.0, 6.0], tags: ["猛男", "守护者", "坚定"] },
+            { name: "虚空之女", id: "Kaisa", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "幸存者", "猎手"] },
+            { name: "复仇之矛", id: "Kalista", vector: [3.0, 8.0, 9.0, 8.5], tags: ["幽灵", "复仇", "背叛"] },
+            { name: "天启者", id: "Karma", vector: [9.5, 1.0, 3.0, 1.0], tags: ["领袖", "智慧", "平衡"] },
+            { name: "死亡颂唱者", id: "Karthus", vector: [7.5, 4.0, 8.0, 3.0], tags: ["幽灵", "死亡", "狂热"] },
+            { name: "虚空行者", id: "Kassadin", vector: [2.0, 9.0, 9.0, 9.5], tags: ["复仇", "虚空", "游侠"] },
+            { name: "不祥之刃", id: "Katarina", vector: [2.0, 9.0, 9.0, 9.5], tags: ["御姐", "冷酷刺客", "无情"] },
+            { name: "正义天使", id: "Kayle", vector: [6.0, 8.5, 4.0, 6.0], tags: ["正义", "审判", "无情"] },
+            { name: "影流之镰", id: "Kayn", vector: [6.0, 8.5, 4.0, 6.0], tags: ["孤狼", "狂傲", "黑暗"] },
+            { name: "狂暴之心", id: "Kennen", vector: [7.5, 4.0, 8.0, 3.0], tags: ["灵动", "忍者", "均衡"] },
+            { name: "虚空掠夺者", id: "Khazix", vector: [6.0, 8.5, 4.0, 6.0], tags: ["怪物", "进化", "冷酷刺客"] },
+            { name: "永猎双子", id: "Kindred", vector: [3.0, 8.0, 9.0, 8.5], tags: ["死神", "神秘", "双生"] },
+            { name: "暴怒骑士", id: "Kled", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴怒", "骑士", "无情"] },
+            { name: "深渊巨口", id: "KogMaw", vector: [3.0, 8.0, 9.0, 8.5], tags: ["怪物", "饥饿", "虚空"] },
+            { name: "诡术妖姬", id: "Leblanc", vector: [2.0, 9.0, 9.0, 9.5], tags: ["阴险", "幕后黑手", "优雅"] },
+            { name: "盲僧", id: "LeeSin", vector: [5.0, 8.5, 9.5, 8.0], tags: ["宗师", "苦行僧", "高操作"] },
+            { name: "曙光女神", id: "Leona", vector: [9.0, 8.0, 4.0, 8.0], tags: ["信仰", "正义", "保护者", "重甲"] },
+            { name: "含羞蓓蕾", id: "Lillia", vector: [6.0, 8.5, 4.0, 6.0], tags: ["萌物", "和平", "精灵"] },
+            { name: "冰霜女巫", id: "Lissandra", vector: [7.5, 4.0, 8.0, 3.0], tags: ["女皇", "幕后黑手", "冷酷"] },
+            { name: "圣枪游侠", id: "Lucian", vector: [3.0, 8.0, 9.0, 8.5], tags: ["复仇", "游侠", "双枪"] },
+            { name: "仙灵女巫", id: "Lulu", vector: [9.5, 1.0, 3.0, 1.0], tags: ["萌物", "精灵", "魔法"] },
+            { name: "光辉女郎", id: "Lux", vector: [6.0, 8.5, 4.0, 6.0], tags: ["美少女", "正义", "乐观"] },
+            { name: "熔岩巨兽", id: "Malphite", vector: [9.0, 7.0, 1.5, 6.0], tags: ["巨兽", "憨憨", "不可阻挡"] },
+            { name: "虚空先知", id: "Malzahar", vector: [7.5, 4.0, 8.0, 3.0], tags: ["狂热", "预言家", "虚空"] },
+            { name: "扭曲树精", id: "Maokai", vector: [9.0, 8.0, 4.0, 8.0], tags: ["复仇", "守护者", "悲剧"] },
+            { name: "无极剑圣", id: "MasterYi", vector: [2.0, 9.0, 9.0, 9.5], tags: ["宗师", "冥想", "无敌"] },
+            { name: "明烛", id: "Milio", vector: [9.5, 1.0, 3.0, 1.0], tags: ["少年", "温暖", "辅助"] },
+            { name: "赏金猎人", id: "MissFortune", vector: [3.0, 8.0, 9.0, 8.5], tags: ["高颜值", "复仇", "海盗"] },
+            { name: "齐天大圣", id: "MonkeyKing", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神话", "搞怪", "灵动"] },
+            { name: "铁铠冥魂", id: "Mordekaiser", vector: [6.0, 8.5, 4.0, 6.0], tags: ["魔王", "无情", "暴君"] },
+            { name: "堕落天使", id: "Morgana", vector: [9.5, 1.0, 3.0, 1.0], tags: ["堕落", "痛苦", "悲剧"] },
+            { name: "百裂冥犬", id: "Naafiri", vector: [2.0, 9.0, 9.0, 9.5], tags: ["怪物", "群袭", "暗裔"] },
+            { name: "唤潮鲛姬", id: "Nami", vector: [9.5, 1.0, 3.0, 1.0], tags: ["高颜值", "神秘", "深海"] },
+            { name: "沙漠死神", id: "Nasus", vector: [6.0, 8.5, 4.0, 6.0], tags: ["学者", "神明", "无情"] },
+            { name: "深海泰坦", id: "Nautilus", vector: [9.0, 8.0, 4.0, 8.0], tags: ["复仇", "巨兽", "深海", "保护者"] },
+            { name: "万花通灵", id: "Neeko", vector: [7.5, 4.0, 8.0, 3.0], tags: ["自然", "灵动", "百合"] },
+            { name: "狂野女猎手", id: "Nidalee", vector: [2.0, 9.0, 9.0, 9.5], tags: ["御姐", "野性", "猎手"] },
+            { name: "不羁之悦", id: "Nilah", vector: [3.0, 8.0, 9.0, 8.5], tags: ["水手", "快乐", "灵动"] },
+            { name: "永恒梦魇", id: "Nocturne", vector: [2.0, 9.0, 9.0, 9.5], tags: ["纯粹邪恶", "梦魇", "恐怖"] },
+            { name: "雪原双子", id: "Nunu", vector: [9.0, 8.0, 4.0, 8.0], tags: ["纯真", "巨兽", "快乐"] },
+            { name: "狂战士", id: "Olaf", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂暴", "猛男", "无情"] },
+            { name: "发条魔灵", id: "Orianna", vector: [7.5, 4.0, 8.0, 3.0], tags: ["机甲科技", "悲剧", "傀儡"] },
+            { name: "山隐之焰", id: "Ornn", vector: [9.0, 8.0, 4.0, 8.0], tags: ["工匠", "神明", "孤单"] },
+            { name: "不屈之枪", id: "Pantheon", vector: [2.0, 9.0, 9.0, 9.5], tags: ["凡人", "不屈", "战神"] },
+            { name: "圣锤之毅", id: "Poppy", vector: [9.0, 6.0, 5.0, 5.0], tags: ["英雄", "保护者", "坚定", "重甲"] },
+            { name: "血港鬼影", id: "Pyke", vector: [2.0, 9.0, 9.0, 9.5], tags: ["疯批", "连环杀手", "幽灵"] },
+            { name: "元素女皇", id: "Qiyana", vector: [2.0, 9.0, 9.0, 9.5], tags: ["女皇", "狂傲", "天才"] },
+            { name: "德玛西亚之翼", id: "Quinn", vector: [6.0, 8.5, 4.0, 6.0], tags: ["游侠", "正义", "军人"] },
+            { name: "幻翎", id: "Rakan", vector: [6.0, 8.5, 4.0, 6.0], tags: ["帅哥", "灵动", "艺术"] },
+            { name: "披甲龙龟", id: "Rammus", vector: [9.0, 8.0, 4.0, 8.0], tags: ["沉默", "神秘", "巨兽"] },
+            { name: "虚空遁地兽", id: "RekSai", vector: [6.0, 8.5, 4.0, 6.0], tags: ["女皇", "怪物", "猎手"] },
+            { name: "镕铁少女", id: "Rell", vector: [9.0, 8.5, 4.0, 8.0], tags: ["叛逆", "机甲科技", "骑士", "重甲"] },
+            { name: "炼金男爵", id: "Renata", vector: [9.5, 1.0, 3.0, 1.0], tags: ["军阀", "幕后黑手", "阴险"] },
+            { name: "荒漠屠夫", id: "Renekton", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴怒", "疯狂", "巨兽"] },
+            { name: "傲之追猎者", id: "Rengar", vector: [2.0, 9.0, 9.0, 9.5], tags: ["猎手", "野性", "孤狼"] },
+            { name: "放逐之刃", id: "Riven", vector: [6.0, 8.5, 4.0, 6.0], tags: ["放逐", "悲剧", "高操作"] },
+            { name: "机械公敌", id: "Rumble", vector: [8.5, 6.0, 7.0, 4.0], tags: ["约德尔", "机甲科技", "暴躁", "搞怪"] },
+            { name: "符文法师", id: "Ryze", vector: [7.5, 4.0, 8.0, 3.0], tags: ["学者", "流浪者", "守护者"] },
+            { name: "沙漠玫瑰", id: "Samira", vector: [3.0, 8.0, 9.0, 8.5], tags: ["御姐", "狂傲", "赏金猎人"] },
+            { name: "北地之怒", id: "Sejuani", vector: [9.0, 8.0, 4.0, 8.0], tags: ["女皇", "暴君", "征服者"] },
+            { name: "涤魂圣枪", id: "Senna", vector: [3.0, 8.0, 9.0, 8.5], tags: ["复仇", "幽灵", "正义"] },
+            { name: "星籁歌姬", id: "Seraphine", vector: [9.0, 2.0, 4.0, 2.0], tags: ["偶像", "音乐艺术", "快乐", "高颜值"] },
+            { name: "腕豪", id: "Sett", vector: [6.0, 9.5, 2.0, 6.0], tags: ["猛男", "黑帮大佬", "近战拳拳到肉", "暴躁"] },
+            { name: "恶魔小丑", id: "Shaco", vector: [2.0, 9.0, 9.0, 9.5], tags: ["疯批", "恶作剧", "纯粹邪恶"] },
+            { name: "暮光之眼", id: "Shen", vector: [9.0, 8.0, 4.0, 8.0], tags: ["均衡", "领袖", "忍者"] },
+            { name: "龙血武姬", id: "Shyvana", vector: [6.0, 8.5, 4.0, 6.0], tags: ["混血", "巨兽", "暴君"] },
+            { name: "炼金术士", id: "Singed", vector: [6.0, 8.5, 4.0, 6.0], tags: ["疯批", "科学家", "搞怪"] },
+            { name: "亡灵战神", id: "Sion", vector: [9.0, 8.0, 4.0, 8.0], tags: ["巨兽", "僵尸", "狂暴"] },
+            { name: "战争女神", id: "Sivir", vector: [3.0, 8.0, 9.0, 8.5], tags: ["赏金猎人", "雇佣兵", "自私"] },
+            { name: "上古领主", id: "Skarner", vector: [9.0, 8.0, 4.0, 8.0], tags: ["不死", "暴君", "魔法"] },
+            { name: "炽炎雏龙", id: "Smolder", vector: [3.0, 8.0, 9.0, 8.5], tags: ["萌物", "龙", "天才"] },
+            { name: "琴瑟仙女", id: "Sona", vector: [9.5, 1.0, 3.0, 1.0], tags: ["高颜值", "音乐艺术", "哑女"] },
+            { name: "众星之子", id: "Soraka", vector: [9.5, 1.0, 3.0, 1.0], tags: ["神明", "牺牲", "救世主"] },
+            { name: "诺克萨斯统领", id: "Swain", vector: [7.5, 4.0, 8.0, 3.0], tags: ["统帅", "高智商", "幕后黑手"] },
+            { name: "解脱者", id: "Sylas", vector: [2.0, 9.0, 9.0, 9.5], tags: ["革命者", "狂傲", "反叛"] },
+            { name: "暗黑元首", id: "Syndra", vector: [7.5, 4.0, 8.0, 3.0], tags: ["力量", "狂傲", "无情"] },
+            { name: "河流之王", id: "TahmKench", vector: [9.0, 8.0, 4.0, 8.0], tags: ["恶魔", "贪婪", "交易"] },
+            { name: "岩雀", id: "Taliyah", vector: [7.5, 4.0, 8.0, 3.0], tags: ["游侠", "自然", "少女"] },
+            { name: "刀锋之影", id: "Talon", vector: [2.0, 9.0, 9.0, 9.5], tags: ["冷酷刺客", "孤狼", "无情"] },
+            { name: "瓦洛兰之盾", id: "Taric", vector: [9.5, 1.0, 3.0, 1.0], tags: ["帅哥", "保护者", "星灵"] },
+            { name: "迅捷斥候", id: "Teemo", vector: [7.5, 4.0, 8.0, 3.0], tags: ["搞怪", "隐蔽", "斥候"] },
+            { name: "魂锁典狱长", id: "Thresh", vector: [9.0, 8.0, 4.0, 8.0], tags: ["纯粹邪恶", "幽灵", "狱卒"] },
+            { name: "麦林炮手", id: "Tristana", vector: [3.0, 8.0, 9.0, 8.5], tags: ["火爆", "少女", "炮手"] },
+            { name: "巨魔之王", id: "Trundle", vector: [6.0, 8.5, 4.0, 6.0], tags: ["巨兽", "狡诈", "国王"] },
+            { name: "蛮族之王", id: "Tryndamere", vector: [6.0, 8.5, 4.0, 6.0], tags: ["狂暴", "猛男", "无死"] },
+            { name: "卡牌大师", id: "TwistedFate", vector: [7.5, 4.0, 8.0, 3.0], tags: ["赌徒", "游侠", "狡诈"] },
+            { name: "瘟疫之源", id: "Twitch", vector: [3.0, 8.0, 9.0, 8.5], tags: ["疯狂", "怪物", "潜行"] },
+            { name: "兽灵行者", id: "Udyr", vector: [6.0, 8.5, 4.0, 6.0], tags: ["萨满", "野性", "精神"] },
+            { name: "无畏战车", id: "Urgot", vector: [6.0, 8.5, 4.0, 6.0], tags: ["机甲科技", "暴怒", "怪物"] },
+            { name: "惩戒之箭", id: "Varus", vector: [3.0, 8.0, 9.0, 8.5], tags: ["暗裔", "复仇", "猎手"] },
+            { name: "暗夜猎手", id: "Vayne", vector: [2.0, 8.0, 9.5, 8.5], tags: ["冷酷刺客", "猎手", "孤狼"] },
+            { name: "邪恶小法师", id: "Veigar", vector: [7.5, 4.0, 8.0, 3.0], tags: ["纯粹邪恶", "搞怪", "约德尔"] },
+            { name: "虚空之眼", id: "Velkoz", vector: [7.5, 4.0, 8.0, 3.0], tags: ["学者", "怪物", "分解"] },
+            { name: "愁云使者", id: "Vex", vector: [7.0, 6.0, 6.0, 5.0], tags: ["厌世", "哥特", "阴暗"] },
+            { name: "皮城执法官", id: "Vi", vector: [6.0, 8.5, 4.0, 6.0], tags: ["暴躁", "执法者", "近战拳拳到肉"] },
+            { name: "破败之王", id: "Viego", vector: [2.0, 9.0, 9.0, 9.5], tags: ["痴情", "悲剧", "疯批"] },
+            { name: "奥术先驱", id: "Viktor", vector: [7.5, 4.0, 8.0, 3.0], tags: ["高智商", "神秘", "魔法"] },
+            { name: "猩红收割者", id: "Vladimir", vector: [7.5, 4.0, 8.0, 3.0], tags: ["吸血鬼", "邪恶", "优雅"] },
+            { name: "不灭狂雷", id: "Volibear", vector: [6.0, 8.5, 4.0, 6.0], tags: ["神明", "狂暴", "巨兽"] },
+            { name: "祖安怒兽", id: "Warwick", vector: [6.0, 8.5, 4.0, 6.0], tags: ["怪物", "暴怒", "悲剧"] },
+            { name: "逆羽", id: "Xayah", vector: [3.0, 8.0, 9.0, 8.5], tags: ["反叛", "痴情", "游侠"] },
+            { name: "远古巫灵", id: "Xerath", vector: [7.5, 4.0, 8.0, 3.0], tags: ["飞升者", "魔法", "野心"] },
+            { name: "德邦总管", id: "XinZhao", vector: [6.0, 8.5, 4.0, 6.0], tags: ["忠诚", "猛男", "军人"] },
+            { name: "疾风剑豪", id: "Yasuo", vector: [2.0, 9.5, 10.0, 9.5], tags: ["浪子", "悲惨身世", "孤狼", "高操作"] },
+            { name: "封魔剑魂", id: "Yone", vector: [3.0, 9.0, 9.0, 9.0], tags: ["猎手", "悲剧", "双剑", "高操作"] },
+            { name: "牧魂人", id: "Yorick", vector: [6.0, 8.5, 4.0, 6.0], tags: ["悲剧", "孤单", "掘墓"] },
+            { name: "魔法猫咪", id: "Yuumi", vector: [10.0, 0.5, 1.0, 0.5], tags: ["萌物", "快乐", "挂件", "宠物"] },
+            { name: "生化魔人", id: "Zac", vector: [9.0, 8.0, 4.0, 8.0], tags: ["怪物", "搞怪", "实验体"] },
+            { name: "影流之主", id: "Zed", vector: [2.0, 8.5, 9.0, 8.5], tags: ["冷酷刺客", "宗师", "黑暗"] },
+            { name: "祖安花火", id: "Zeri", vector: [3.0, 8.0, 9.0, 8.5], tags: ["少女", "活力", "电能"] },
+            { name: "爆破鬼才", id: "Ziggs", vector: [7.5, 4.0, 8.0, 3.0], tags: ["疯批", "搞怪", "炸弹狂"] },
+            { name: "时光守护者", id: "Zilean", vector: [6.0, 8.5, 4.0, 6.0], tags: ["学者", "时间", "悲剧"] },
+            { name: "暮光星灵", id: "Zoe", vector: [7.5, 4.0, 8.0, 3.0], tags: ["神明", "搞怪", "天真"] },
+            { name: "荆棘之兴", id: "Zyra", vector: [7.5, 4.0, 8.0, 3.0], tags: ["怪物", "自然", "诱惑"] }
         ];
 
         // 2. 60 题终极题库
@@ -818,13 +837,11 @@
             }
         ];
 
-        // 3. 系统状态变量
         let currentQuestionIndex = 0;
-        let userScore = [5.0, 5.0, 5.0, 5.0]; // 初始玩家操作基准分
-        let userTags = []; // 初始玩家收集到的灵魂标签
-        let radarChartInstance = null; // 图表实例
+        let userScore = [5.0, 5.0, 5.0, 5.0];
+        let userTags = [];
+        let radarChartInstance = null;
 
-        // 4. UI 逻辑控制
         function startQuiz() {
             document.getElementById('screen-start').classList.add('hidden');
             document.getElementById('screen-quiz').classList.remove('hidden');
@@ -836,7 +853,6 @@
             document.getElementById('question-counter').innerText = `题目 ${currentQuestionIndex + 1} / ${QUESTIONS.length}`;
             document.getElementById('question-text').innerText = q.q;
             
-            // 更新进度条
             const progress = ((currentQuestionIndex) / QUESTIONS.length) * 100;
             document.getElementById('progress-bar').style.width = `${progress}%`;
 
@@ -848,7 +864,6 @@
                 btn.className = "w-full text-left bg-slate-700 border border-slate-600 rounded-lg p-4 text-slate-200 option-btn";
                 btn.innerText = opt.text;
                 
-                // 判断当前选项传递的是标签数组还是分值数组
                 const payload = opt.tags ? opt.tags : opt.weight;
                 btn.onclick = () => handleAnswer(payload);
                 
@@ -857,12 +872,9 @@
         }
 
         function handleAnswer(payload) {
-            // 如果传来的是标签（前 10 题）
             if (typeof payload[0] === 'string') {
                 userTags = userTags.concat(payload);
-            } 
-            // 如果传来的是操作分值（后 50 题）
-            else {
+            } else {
                 for(let i=0; i<4; i++) {
                     userScore[i] += payload[i];
                 }
@@ -876,26 +888,22 @@
             }
         }
 
-        // 5. 终极级联引擎：初筛 + 决选 + 雷达图渲染 + 羁绊生成
         function calculateResult() {
             document.getElementById('screen-quiz').classList.add('hidden');
             document.getElementById('screen-result').classList.remove('hidden');
 
-            // --- A. 分数平滑压缩 ---
             let finalVector = [0, 0, 0, 0];
             for(let i=0; i<4; i++) {
                 let scaled = 5.0 + (userScore[i] - 5.0) * 0.12;
                 finalVector[i] = Math.max(0.1, Math.min(9.9, scaled));
             }
 
-            // --- B. 生成 MBTI 峡谷代码 ---
             let mbti = "";
-            mbti += finalVector[0] >= 5.0 ? "E" : "I"; // E:团队支援 I:孤狼单带
-            mbti += finalVector[2] >= 5.0 ? "S" : "N"; // S:极致微操 N:宏观意识
-            mbti += finalVector[3] >= 5.0 ? "F" : "T"; // F:赌徒激进 T:理智止损
-            mbti += finalVector[1] >= 5.0 ? "J" : "P"; // J:果断开团 P:隐忍发育
+            mbti += finalVector[0] >= 5.0 ? "E" : "I"; 
+            mbti += finalVector[2] >= 5.0 ? "S" : "N"; 
+            mbti += finalVector[3] >= 5.0 ? "F" : "T"; 
+            mbti += finalVector[1] >= 5.0 ? "J" : "P"; 
             
-            // --- C. 操作习惯初筛 (Cosine Similarity) ---
             let scoredChampions = CHAMPIONS.map(champ => {
                 let dotProduct = 0;
                 let normA = 0;
@@ -909,11 +917,9 @@
                 return { ...champ, cosineScore: (rawCosine + 1) / 2 };
             });
 
-            // 降序排列，取前 5 进决赛
             scoredChampions.sort((a, b) => b.cosineScore - a.cosineScore);
             let top5Champions = scoredChampions.slice(0, 5);
 
-            // --- D. 灵魂标签决选 (Jaccard Index) ---
             let bestMatch = top5Champions[0];
             let maxJaccard = -1;
 
@@ -932,24 +938,19 @@
                 }
             });
 
-            // --- E. 寻找羁绊 (最佳双排 & 一生之敌) ---
-            // 宿敌：操作相似度最低的人 (列表最后一个)
+            // 羁绊计算
             let nemesis = scoredChampions[scoredChampions.length - 1];
-            
-            // 最佳双排 (修复版)：只反转“团队”和“激进”达成互补，但保留相同的“微操”和“风险”频段
-            // 比如：稳健的软辅应该找一个稳健的重装战士双排，而不是乱送的刺客
             let duoVector = [
-                10 - finalVector[0], // 团队意识互补反转
-                10 - finalVector[1], // 激进杀心互补反转
-                finalVector[2],      // 保持微操步调一致
-                finalVector[3]       // 保持风险偏好一致
+                10 - finalVector[0], 
+                10 - finalVector[1], 
+                finalVector[2],      
+                finalVector[3]       
             ];
             
             let bestDuo = CHAMPIONS[0];
             let maxDuoCosine = -Infinity;
             
             CHAMPIONS.forEach(champ => {
-                // 双排不能是自己，也不能是宿敌
                 if (champ.name === bestMatch.name || champ.name === nemesis.name) return;
                 
                 let dotP = 0, nA = 0, nB = 0;
@@ -959,18 +960,19 @@
                     nB += Math.pow(champ.vector[i], 2);
                 }
                 let sim = dotP / (Math.sqrt(nA) * Math.sqrt(nB));
-                
                 if(sim > maxDuoCosine) {
                     maxDuoCosine = sim;
                     bestDuo = champ;
                 }
             });
 
-            // --- F. 渲染文本信息 ---
             let matchedTags = bestMatch.tags.filter(tag => userTags.includes(tag));
-            let tagDisplay = matchedTags.length > 0 ? matchedTags.join(" / ") : "你的灵魂极其独特，无明确标签。";
+            let tagDisplay = matchedTags.length > 0 ? matchedTags.join(" / ") : "极其纯粹，无定式灵魂";
             let top5Names = top5Champions.map(c => c.name).join("、");
 
+            // 核心视觉：动态加载官方原画
+            document.getElementById('champ-splash').src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${bestMatch.id}_0.jpg`;
+            
             document.getElementById('result-champ').innerText = bestMatch.name;
             document.getElementById('result-mbti').innerText = `峡谷 MBTI: ${mbti}`;
             document.getElementById('result-duo').innerText = bestDuo.name;
@@ -978,9 +980,9 @@
             document.getElementById('result-top5').innerText = top5Names;
             document.getElementById('result-tags').innerText = tagDisplay;
 
-            // --- G. 绘制赛博朋克雷达图 (Chart.js) ---
+            // 绘制雷达图
             const ctx = document.getElementById('radarChart').getContext('2d');
-            if (radarChartInstance) radarChartInstance.destroy(); // 避免重新测试时重叠
+            if (radarChartInstance) radarChartInstance.destroy(); 
             
             radarChartInstance = new Chart(ctx, {
                 type: 'radar',
@@ -990,9 +992,9 @@
                         {
                             label: '你的灵魂波形',
                             data: [finalVector[0].toFixed(1), finalVector[1].toFixed(1), finalVector[2].toFixed(1), finalVector[3].toFixed(1)],
-                            backgroundColor: 'rgba(56, 189, 248, 0.4)', // Tailwind sky-400
+                            backgroundColor: 'rgba(56, 189, 248, 0.4)',
                             borderColor: 'rgba(56, 189, 248, 1)',
-                            pointBackgroundColor: 'rgba(251, 191, 36, 1)', // Tailwind amber-400
+                            pointBackgroundColor: 'rgba(251, 191, 36, 1)',
                             pointBorderColor: '#fff',
                             pointHoverBackgroundColor: '#fff',
                             pointHoverBorderColor: 'rgba(251, 191, 36, 1)',
@@ -1001,10 +1003,10 @@
                         {
                             label: '本命英雄标定波形',
                             data: [bestMatch.vector[0], bestMatch.vector[1], bestMatch.vector[2], bestMatch.vector[3]],
-                            backgroundColor: 'rgba(244, 63, 94, 0.2)', // Tailwind rose-500
+                            backgroundColor: 'rgba(244, 63, 94, 0.2)',
                             borderColor: 'rgba(244, 63, 94, 0.5)',
                             borderWidth: 1,
-                            borderDash: [5, 5] // 虚线表示英雄标准参考线
+                            borderDash: [5, 5]
                         }
                     ]
                 },
@@ -1014,17 +1016,45 @@
                             angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
                             grid: { color: 'rgba(255, 255, 255, 0.1)' },
                             pointLabels: {
-                                color: 'rgba(148, 163, 184, 1)', // slate-400
+                                color: 'rgba(148, 163, 184, 1)',
                                 font: { size: 12, family: 'sans-serif', weight: 'bold' }
                             },
-                            ticks: { display: false, min: 0, max: 10 } // 隐藏绝对数值刻度
+                            ticks: { display: false, min: 0, max: 10 }
                         }
                     },
                     plugins: {
-                        legend: { labels: { color: '#cbd5e1' } } // slate-300
+                        legend: { labels: { color: '#cbd5e1' } }
                     }
                 }
             });
+        }
+
+        // --- 截图与分享逻辑 (html2canvas) ---
+        function downloadShareCard() {
+            const btn = document.getElementById('download-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `⚙️ 正在生成高清图谱...`;
+            
+            const card = document.getElementById('share-card');
+            
+            setTimeout(() => {
+                html2canvas(card, {
+                    backgroundColor: '#0f172a',
+                    scale: window.devicePixelRatio > 1 ? 2 : 3, // 保证移动端和PC端字体高清
+                    useCORS: true,
+                    allowTaint: false // 依靠CORS和链接上的 crossorigin 属性绕过画布污染
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `LoL-MBTI-我的本命是${document.getElementById('result-champ').innerText}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    btn.innerHTML = originalText;
+                }).catch(err => {
+                    console.error("生成图片失败:", err);
+                    btn.innerHTML = "❌ 生成失败，请刷新重试";
+                    setTimeout(() => btn.innerHTML = originalText, 2000);
+                });
+            }, 800); 
         }
     </script>
 </body>
